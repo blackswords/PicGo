@@ -106,76 +106,76 @@ import { ipcRenderer, IpcRendererEvent } from 'electron'
 import { TOGGLE_SHORTKEY_MODIFIED_MODE } from '#/events/constants'
 
 @Component({
-  name: 'shortkey-page'
+    name: 'shortkey-page'
 })
 export default class extends Vue {
-  list: IShortKeyConfig[] = []
-  keyBindingVisible = false
-  command = ''
-  shortKey = ''
-  currentIndex = 0
-  async created () {
-    const shortKeyConfig = (await this.getConfig<IShortKeyConfigs>('settings.shortKey'))!
-    this.list = Object.keys(shortKeyConfig).map(item => {
-      return {
-        ...shortKeyConfig[item],
-        from: this.calcOrigin(item)
-      }
-    })
-  }
+    list: IShortKeyConfig[] = []
+    keyBindingVisible = false
+    command = ''
+    shortKey = ''
+    currentIndex = 0
+    async created () {
+        const shortKeyConfig = (await this.getConfig<IShortKeyConfigs>('settings.shortKey'))!
+        this.list = Object.keys(shortKeyConfig).map(item => {
+            return {
+                ...shortKeyConfig[item],
+                from: this.calcOrigin(item)
+            }
+        })
+    }
 
-  @Watch('keyBindingVisible')
-  onKeyBindingVisibleChange (val: boolean) {
-    ipcRenderer.send(TOGGLE_SHORTKEY_MODIFIED_MODE, val)
-  }
+    @Watch('keyBindingVisible')
+    onKeyBindingVisibleChange (val: boolean) {
+        ipcRenderer.send(TOGGLE_SHORTKEY_MODIFIED_MODE, val)
+    }
 
-  calcOrigin (item: string) {
-    const [origin] = item.split(':')
-    return origin
-  }
+    calcOrigin (item: string) {
+        const [origin] = item.split(':')
+        return origin
+    }
 
-  calcOriginShowName (item: string) {
-    return item.replace('picgo-plugin-', '')
-  }
+    calcOriginShowName (item: string) {
+        return item.replace('picgo-plugin-', '')
+    }
 
-  toggleEnable (item: IShortKeyConfig) {
-    const status = !item.enable
-    item.enable = status
-    ipcRenderer.send('bindOrUnbindShortKey', item, item.from)
-  }
+    toggleEnable (item: IShortKeyConfig) {
+        const status = !item.enable
+        item.enable = status
+        ipcRenderer.send('bindOrUnbindShortKey', item, item.from)
+    }
 
-  keyDetect (event: KeyboardEvent) {
-    this.shortKey = keyDetect(event).join('+')
-  }
+    keyDetect (event: KeyboardEvent) {
+        this.shortKey = keyDetect(event).join('+')
+    }
 
-  async openKeyBindingDialog (config: IShortKeyConfig, index: number) {
-    this.command = `${config.from}:${config.name}`
-    this.shortKey = await this.getConfig(`settings.shortKey.${this.command}.key`) || ''
-    this.currentIndex = index
-    this.keyBindingVisible = true
-  }
+    async openKeyBindingDialog (config: IShortKeyConfig, index: number) {
+        this.command = `${config.from}:${config.name}`
+        this.shortKey = await this.getConfig(`settings.shortKey.${this.command}.key`) || ''
+        this.currentIndex = index
+        this.keyBindingVisible = true
+    }
 
-  async cancelKeyBinding () {
-    this.keyBindingVisible = false
-    this.shortKey = await this.getConfig<string>(`settings.shortKey.${this.command}.key`) || ''
-  }
-
-  async confirmKeyBinding () {
-    const oldKey = await this.getConfig<string>(`settings.shortKey.${this.command}.key`)
-    const config = Object.assign({}, this.list[this.currentIndex])
-    config.key = this.shortKey
-    ipcRenderer.send('updateShortKey', config, oldKey, config.from)
-    ipcRenderer.once('updateShortKeyResponse', (evt: IpcRendererEvent, result) => {
-      if (result) {
+    async cancelKeyBinding () {
         this.keyBindingVisible = false
-        this.list[this.currentIndex].key = this.shortKey
-      }
-    })
-  }
+        this.shortKey = await this.getConfig<string>(`settings.shortKey.${this.command}.key`) || ''
+    }
 
-  beforeDestroy () {
-    ipcRenderer.send(TOGGLE_SHORTKEY_MODIFIED_MODE, false)
-  }
+    async confirmKeyBinding () {
+        const oldKey = await this.getConfig<string>(`settings.shortKey.${this.command}.key`)
+        const config = Object.assign({}, this.list[this.currentIndex])
+        config.key = this.shortKey
+        ipcRenderer.send('updateShortKey', config, oldKey, config.from)
+        ipcRenderer.once('updateShortKeyResponse', (evt: IpcRendererEvent, result) => {
+            if (result) {
+                this.keyBindingVisible = false
+                this.list[this.currentIndex].key = this.shortKey
+            }
+        })
+    }
+
+    beforeDestroy () {
+        ipcRenderer.send(TOGGLE_SHORTKEY_MODIFIED_MODE, false)
+    }
 }
 </script>
 <style lang='stylus'>

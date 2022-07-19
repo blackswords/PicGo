@@ -59,173 +59,173 @@
 <script lang="ts">
 import { Component, Vue, Watch } from 'vue-property-decorator'
 import {
-  ipcRenderer,
-  IpcRendererEvent
+    ipcRenderer,
+    IpcRendererEvent
 } from 'electron'
 import {
-  SHOW_INPUT_BOX,
-  SHOW_INPUT_BOX_RESPONSE,
-  SHOW_UPLOAD_PAGE_MENU
+    SHOW_INPUT_BOX,
+    SHOW_INPUT_BOX_RESPONSE,
+    SHOW_UPLOAD_PAGE_MENU
 } from '~/universal/events/constants'
 import {
-  isUrl
+    isUrl
 } from '~/universal/utils/common'
 @Component({
-  name: 'upload'
+    name: 'upload'
 })
 export default class extends Vue {
-  dragover = false
-  progress = 0
-  showProgress = false
-  showError = false
-  pasteStyle = ''
-  picBed: IPicBedType[] = []
-  picBedName = ''
-  mounted () {
-    ipcRenderer.on('uploadProgress', (event: IpcRendererEvent, progress: number) => {
-      if (progress !== -1) {
-        this.showProgress = true
-        this.progress = progress
-      } else {
-        this.progress = 100
-        this.showError = true
-      }
-    })
-    this.getPasteStyle()
-    this.getDefaultPicBed()
-    ipcRenderer.on('syncPicBed', () => {
-      this.getDefaultPicBed()
-    })
-    ipcRenderer.send('getPicBeds')
-    ipcRenderer.on('getPicBeds', this.getPicBeds)
-    this.$bus.$on(SHOW_INPUT_BOX_RESPONSE, this.handleInputBoxValue)
-  }
-
-  @Watch('progress')
-  onProgressChange (val: number) {
-    if (val === 100) {
-      setTimeout(() => {
-        this.showProgress = false
-        this.showError = false
-      }, 1000)
-      setTimeout(() => {
-        this.progress = 0
-      }, 1200)
+    dragover = false
+    progress = 0
+    showProgress = false
+    showError = false
+    pasteStyle = ''
+    picBed: IPicBedType[] = []
+    picBedName = ''
+    mounted () {
+        ipcRenderer.on('uploadProgress', (event: IpcRendererEvent, progress: number) => {
+            if (progress !== -1) {
+                this.showProgress = true
+                this.progress = progress
+            } else {
+                this.progress = 100
+                this.showError = true
+            }
+        })
+        this.getPasteStyle()
+        this.getDefaultPicBed()
+        ipcRenderer.on('syncPicBed', () => {
+            this.getDefaultPicBed()
+        })
+        ipcRenderer.send('getPicBeds')
+        ipcRenderer.on('getPicBeds', this.getPicBeds)
+        this.$bus.$on(SHOW_INPUT_BOX_RESPONSE, this.handleInputBoxValue)
     }
-  }
 
-  beforeDestroy () {
-    this.$bus.$off(SHOW_INPUT_BOX_RESPONSE)
-    ipcRenderer.removeAllListeners('uploadProgress')
-    ipcRenderer.removeAllListeners('syncPicBed')
-    ipcRenderer.removeListener('getPicBeds', this.getPicBeds)
-  }
-
-  onDrop (e: DragEvent) {
-    this.dragover = false
-    const items = e.dataTransfer!.items
-    if (items.length === 2 && items[0].type === 'text/uri-list') {
-      this.handleURLDrag(items, e.dataTransfer!)
-    } else if (items[0].type === 'text/plain') {
-      const str = e.dataTransfer!.getData(items[0].type)
-      if (isUrl(str)) {
-        ipcRenderer.send('uploadChoosedFiles', [{ path: str }])
-      } else {
-        this.$message.error(this.$T('TIPS_DRAG_VALID_PICTURE_OR_URL'))
-      }
-    } else {
-      this.ipcSendFiles(e.dataTransfer!.files)
-    }
-  }
-
-  handleURLDrag (items: DataTransferItemList, dataTransfer: DataTransfer) {
-    // text/html
-    // Use this data to get a more precise URL
-    const urlString = dataTransfer.getData(items[1].type)
-    const urlMatch = urlString.match(/<img.*src="(.*?)"/)
-    if (urlMatch) {
-      ipcRenderer.send('uploadChoosedFiles', [
-        {
-          path: urlMatch[1]
+    @Watch('progress')
+    onProgressChange (val: number) {
+        if (val === 100) {
+            setTimeout(() => {
+                this.showProgress = false
+                this.showError = false
+            }, 1000)
+            setTimeout(() => {
+                this.progress = 0
+            }, 1200)
         }
-      ])
-    } else {
-      this.$message.error(this.$T('TIPS_DRAG_VALID_PICTURE_OR_URL'))
     }
-  }
 
-  openUplodWindow () {
-    document.getElementById('file-uploader')!.click()
-  }
-
-  onChange (e: any) {
-    this.ipcSendFiles(e.target.files);
-    (document.getElementById('file-uploader') as HTMLInputElement).value = ''
-  }
-
-  ipcSendFiles (files: FileList) {
-    const sendFiles: IFileWithPath[] = []
-    Array.from(files).forEach((item) => {
-      const obj = {
-        name: item.name,
-        path: item.path
-      }
-      sendFiles.push(obj)
-    })
-    ipcRenderer.send('uploadChoosedFiles', sendFiles)
-  }
-
-  async getPasteStyle () {
-    this.pasteStyle = await this.getConfig('settings.pasteStyle') || 'markdown'
-  }
-
-  handlePasteStyleChange (val: string) {
-    this.saveConfig({
-      'settings.pasteStyle': val
-    })
-  }
-
-  uploadClipboardFiles () {
-    ipcRenderer.send('uploadClipboardFilesFromUploadPage')
-  }
-
-  async uploadURLFiles () {
-    const str = await navigator.clipboard.readText()
-    this.$bus.$emit(SHOW_INPUT_BOX, {
-      value: isUrl(str) ? str : '',
-      title: this.$T('TIPS_INPUT_URL'),
-      placeholder: this.$T('TIPS_HTTP_PREFIX')
-    })
-  }
-
-  handleInputBoxValue (val: string) {
-    if (val === '') return false
-    if (isUrl(val)) {
-      ipcRenderer.send('uploadChoosedFiles', [{
-        path: val
-      }])
-    } else {
-      this.$message.error(this.$T('TIPS_INPUT_VALID_URL'))
+    beforeDestroy () {
+        this.$bus.$off(SHOW_INPUT_BOX_RESPONSE)
+        ipcRenderer.removeAllListeners('uploadProgress')
+        ipcRenderer.removeAllListeners('syncPicBed')
+        ipcRenderer.removeListener('getPicBeds', this.getPicBeds)
     }
-  }
 
-  async getDefaultPicBed () {
-    const currentPicBed = await this.getConfig<string>('picBed.current')
-    this.picBed.forEach(item => {
-      if (item.type === currentPicBed) {
-        this.picBedName = item.name
-      }
-    })
-  }
+    onDrop (e: DragEvent) {
+        this.dragover = false
+        const items = e.dataTransfer!.items
+        if (items.length === 2 && items[0].type === 'text/uri-list') {
+            this.handleURLDrag(items, e.dataTransfer!)
+        } else if (items[0].type === 'text/plain') {
+            const str = e.dataTransfer!.getData(items[0].type)
+            if (isUrl(str)) {
+                ipcRenderer.send('uploadChoosedFiles', [{ path: str }])
+            } else {
+                this.$message.error(this.$T('TIPS_DRAG_VALID_PICTURE_OR_URL'))
+            }
+        } else {
+            this.ipcSendFiles(e.dataTransfer!.files)
+        }
+    }
 
-  getPicBeds (event: Event, picBeds: IPicBedType[]) {
-    this.picBed = picBeds
-    this.getDefaultPicBed()
-  }
+    handleURLDrag (items: DataTransferItemList, dataTransfer: DataTransfer) {
+        // text/html
+        // Use this data to get a more precise URL
+        const urlString = dataTransfer.getData(items[1].type)
+        const urlMatch = urlString.match(/<img.*src="(.*?)"/)
+        if (urlMatch) {
+            ipcRenderer.send('uploadChoosedFiles', [
+                {
+                    path: urlMatch[1]
+                }
+            ])
+        } else {
+            this.$message.error(this.$T('TIPS_DRAG_VALID_PICTURE_OR_URL'))
+        }
+    }
 
-  async handleChangePicBed () {
-    ipcRenderer.send(SHOW_UPLOAD_PAGE_MENU)
-  }
+    openUplodWindow () {
+        document.getElementById('file-uploader')!.click()
+    }
+
+    onChange (e: any) {
+        this.ipcSendFiles(e.target.files);
+        (document.getElementById('file-uploader') as HTMLInputElement).value = ''
+    }
+
+    ipcSendFiles (files: FileList) {
+        const sendFiles: IFileWithPath[] = []
+        Array.from(files).forEach((item) => {
+            const obj = {
+                name: item.name,
+                path: item.path
+            }
+            sendFiles.push(obj)
+        })
+        ipcRenderer.send('uploadChoosedFiles', sendFiles)
+    }
+
+    async getPasteStyle () {
+        this.pasteStyle = await this.getConfig('settings.pasteStyle') || 'markdown'
+    }
+
+    handlePasteStyleChange (val: string) {
+        this.saveConfig({
+            'settings.pasteStyle': val
+        })
+    }
+
+    uploadClipboardFiles () {
+        ipcRenderer.send('uploadClipboardFilesFromUploadPage')
+    }
+
+    async uploadURLFiles () {
+        const str = await navigator.clipboard.readText()
+        this.$bus.$emit(SHOW_INPUT_BOX, {
+            value: isUrl(str) ? str : '',
+            title: this.$T('TIPS_INPUT_URL'),
+            placeholder: this.$T('TIPS_HTTP_PREFIX')
+        })
+    }
+
+    handleInputBoxValue (val: string) {
+        if (val === '') return false
+        if (isUrl(val)) {
+            ipcRenderer.send('uploadChoosedFiles', [{
+                path: val
+            }])
+        } else {
+            this.$message.error(this.$T('TIPS_INPUT_VALID_URL'))
+        }
+    }
+
+    async getDefaultPicBed () {
+        const currentPicBed = await this.getConfig<string>('picBed.current')
+        this.picBed.forEach(item => {
+            if (item.type === currentPicBed) {
+                this.picBedName = item.name
+            }
+        })
+    }
+
+    getPicBeds (event: Event, picBeds: IPicBedType[]) {
+        this.picBed = picBeds
+        this.getDefaultPicBed()
+    }
+
+    async handleChangePicBed () {
+        ipcRenderer.send(SHOW_UPLOAD_PAGE_MENU)
+    }
 }
 </script>
 <style lang='stylus'>

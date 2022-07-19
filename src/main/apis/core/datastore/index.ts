@@ -6,65 +6,65 @@ import { T } from '~/universal/i18n'
 const STORE_PATH = dbPathDir()
 
 if (!fs.pathExistsSync(STORE_PATH)) {
-  fs.mkdirpSync(STORE_PATH)
+    fs.mkdirpSync(STORE_PATH)
 }
 const CONFIG_PATH: string = dbPathChecker()
 const DB_PATH: string = getGalleryDBPath().dbPath
 
 class ConfigStore {
-  private db: JSONStore
-  constructor () {
-    this.db = new JSONStore(CONFIG_PATH)
+    private db: JSONStore
+    constructor () {
+        this.db = new JSONStore(CONFIG_PATH)
 
-    if (!this.db.has('picBed')) {
-      this.db.set('picBed', {
-        current: 'smms', // deprecated
-        uploader: 'smms',
-        smms: {
-          token: ''
+        if (!this.db.has('picBed')) {
+            this.db.set('picBed', {
+                current: 'smms', // deprecated
+                uploader: 'smms',
+                smms: {
+                    token: ''
+                }
+            })
         }
-      })
+
+        if (!this.db.has('settings.shortKey')) {
+            this.db.set('settings.shortKey[picgo:upload]', {
+                enable: true,
+                key: 'CommandOrControl+Shift+P',
+                name: 'upload',
+                label: T('QUICK_UPLOAD')
+            })
+        }
+        this.read()
     }
 
-    if (!this.db.has('settings.shortKey')) {
-      this.db.set('settings.shortKey[picgo:upload]', {
-        enable: true,
-        key: 'CommandOrControl+Shift+P',
-        name: 'upload',
-        label: T('QUICK_UPLOAD')
-      })
+    read (flush = false) {
+        // if flush -> true, read origin file again
+        this.db.read(flush)
+        return this.db
     }
-    this.read()
-  }
 
-  read (flush = false) {
-    // if flush -> true, read origin file again
-    this.db.read(flush)
-    return this.db
-  }
-
-  get (key = ''): any {
-    if (key === '') {
-      return this.db.read()
+    get (key = ''): any {
+        if (key === '') {
+            return this.db.read()
+        }
+        return this.db.get(key)
     }
-    return this.db.get(key)
-  }
 
-  set (key: string, value: any): void {
-    return this.db.set(key, value)
-  }
+    set (key: string, value: any): void {
+        return this.db.set(key, value)
+    }
 
-  has (key: string) {
-    return this.db.has(key)
-  }
+    has (key: string) {
+        return this.db.has(key)
+    }
 
-  unset (key: string, value: any): boolean {
-    return this.db.unset(key, value)
-  }
+    unset (key: string, value: any): boolean {
+        return this.db.unset(key, value)
+    }
 
-  getConfigPath () {
-    return CONFIG_PATH
-  }
+    getConfigPath () {
+        return CONFIG_PATH
+    }
 }
 
 const db = new ConfigStore()
@@ -73,19 +73,15 @@ export default db
 
 // v2.3.0 add gallery db
 class GalleryDB {
-  private static instance: DBStore
-  private constructor () {
-    console.log('init gallery db')
-  }
-
-  public static getInstance (): DBStore {
-    if (!GalleryDB.instance) {
-      GalleryDB.instance = new DBStore(DB_PATH, 'gallery')
+    private static instance: DBStore
+    public static getInstance (): DBStore {
+        if (!GalleryDB.instance) {
+            GalleryDB.instance = new DBStore(DB_PATH, 'gallery')
+        }
+        return GalleryDB.instance
     }
-    return GalleryDB.instance
-  }
 }
 
 export {
-  GalleryDB
+    GalleryDB
 }

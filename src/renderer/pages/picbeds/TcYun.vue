@@ -98,51 +98,51 @@ import { OPEN_URL } from '#/events/constants'
 import { ITcyunConfig } from 'picgo/dist/types'
 import { trimValues } from '@/utils/common'
 @Component({
-  name: 'tcyun',
-  mixins: [mixin]
+    name: 'tcyun',
+    mixins: [mixin]
 })
 export default class extends Vue {
-  form: ITcyunConfig = {
-    secretId: '',
-    secretKey: '',
-    bucket: '',
-    appId: '',
-    area: '',
-    path: '',
-    customUrl: '',
-    version: 'v5',
-    options: ''
-  }
-
-  async created () {
-    const config = await this.getConfig<ITcyunConfig>('picBed.tcyun')
-    if (config) {
-      this.form = Object.assign({}, config)
+    form: ITcyunConfig = {
+        secretId: '',
+        secretKey: '',
+        bucket: '',
+        appId: '',
+        area: '',
+        path: '',
+        customUrl: '',
+        version: 'v5',
+        options: ''
     }
-  }
 
-  confirm () {
-    // @ts-ignore
-    this.$refs.tcyun.validate((valid) => {
-      if (valid) {
-        this.saveConfig({
-          'picBed.tcyun': trimValues(this.form)
-        })
-        const successNotification = new window.Notification('设置结果', {
-          body: '设置成功'
-        })
-        successNotification.onclick = () => {
-          return true
+    async created () {
+        const config = await this.getConfig<ITcyunConfig>('picBed.tcyun')
+        if (config) {
+            this.form = Object.assign({}, config)
         }
-      } else {
-        return false
-      }
-    })
-  }
+    }
 
-  openWiki () {
-    ipcRenderer.send(OPEN_URL, 'https://picgo.github.io/PicGo-Doc/zh/guide/config.html#%E8%85%BE%E8%AE%AF%E4%BA%91cos')
-  }
+    confirm () {
+        // @ts-ignore
+        this.$refs.tcyun.validate((valid) => {
+            if (valid) {
+                this.saveConfig({
+                    'picBed.tcyun': trimValues(this.form)
+                })
+                const successNotification = new window.Notification('设置结果', {
+                    body: '设置成功'
+                })
+                successNotification.onclick = () => {
+                    return true
+                }
+            } else {
+                return false
+            }
+        })
+    }
+
+    openWiki () {
+        ipcRenderer.send(OPEN_URL, 'https://picgo.github.io/PicGo-Doc/zh/guide/config.html#%E8%85%BE%E8%AE%AF%E4%BA%91cos')
+    }
 }
 </script>
 <style lang='stylus'>

@@ -149,123 +149,123 @@ import QrcodeVue from 'qrcode.vue'
 import pick from 'lodash/pick'
 import pkg from 'root/package.json'
 import {
-  ipcRenderer,
-  IpcRendererEvent,
-  clipboard
+    ipcRenderer,
+    IpcRendererEvent,
+    clipboard
 } from 'electron'
 import mixin from '@/utils/mixin'
 import InputBoxDialog from '@/components/InputBoxDialog.vue'
 import {
-  MINIMIZE_WINDOW,
-  CLOSE_WINDOW,
-  SHOW_MAIN_PAGE_MENU,
-  SHOW_MAIN_PAGE_QRCODE,
-  SHOW_MAIN_PAGE_DONATION
+    MINIMIZE_WINDOW,
+    CLOSE_WINDOW,
+    SHOW_MAIN_PAGE_MENU,
+    SHOW_MAIN_PAGE_QRCODE,
+    SHOW_MAIN_PAGE_DONATION
 } from '~/universal/events/constants'
 @Component({
-  name: 'main-page',
-  mixins: [mixin],
-  components: {
-    InputBoxDialog,
-    QrcodeVue
-  }
+    name: 'main-page',
+    mixins: [mixin],
+    components: {
+        InputBoxDialog,
+        QrcodeVue
+    }
 })
 export default class extends Vue {
-  version = process.env.NODE_ENV === 'production' ? pkg.version : 'Dev'
-  defaultActive = 'upload'
-  visible = false
-  keyBindingVisible = false
-  customLinkVisible = false
-  os = ''
-  picBed: IPicBedType[] = []
-  qrcodeVisible = false
-  picBedConfigString = ''
-  choosedPicBedForQRCode: string[] = []
-  created () {
-    this.os = process.platform
-    ipcRenderer.send('getPicBeds')
-    ipcRenderer.on('getPicBeds', this.getPicBeds)
-    this.handleGetPicPeds()
-    ipcRenderer.on(SHOW_MAIN_PAGE_QRCODE, () => {
-      this.qrcodeVisible = true
-    })
-    ipcRenderer.on(SHOW_MAIN_PAGE_DONATION, () => {
-      this.visible = true
-    })
-  }
-
-  @Watch('choosedPicBedForQRCode')
-  choosedPicBedForQRCodeChange (val: string[]) {
-    if (val.length > 0) {
-      this.$nextTick(async () => {
-        const picBedConfig = await this.getConfig('picBed')
-        const config = pick(picBedConfig, ...this.choosedPicBedForQRCode)
-        this.picBedConfigString = JSON.stringify(config)
-      })
-    }
-  }
-
-  handleGetPicPeds = () => {
-    ipcRenderer.send('getPicBeds')
-  }
-
-  handleSelect (index: string) {
-    const type = index.match(/picbeds-/)
-    if (type === null) {
-      this.$router.push({
-        name: index
-      })
-    } else {
-      const picBed = index.replace(/picbeds-/, '')
-      if (this.$builtInPicBed.includes(picBed)) {
-        this.$router.push({
-          name: picBed
+    version = process.env.NODE_ENV === 'production' ? pkg.version : 'Dev'
+    defaultActive = 'upload'
+    visible = false
+    keyBindingVisible = false
+    customLinkVisible = false
+    os = ''
+    picBed: IPicBedType[] = []
+    qrcodeVisible = false
+    picBedConfigString = ''
+    choosedPicBedForQRCode: string[] = []
+    created () {
+        this.os = process.platform
+        ipcRenderer.send('getPicBeds')
+        ipcRenderer.on('getPicBeds', this.getPicBeds)
+        this.handleGetPicPeds()
+        ipcRenderer.on(SHOW_MAIN_PAGE_QRCODE, () => {
+            this.qrcodeVisible = true
         })
-      } else {
-        this.$router.push({
-          name: 'others',
-          params: {
-            type: picBed
-          }
+        ipcRenderer.on(SHOW_MAIN_PAGE_DONATION, () => {
+            this.visible = true
         })
-      }
     }
-  }
 
-  minimizeWindow () {
-    ipcRenderer.send(MINIMIZE_WINDOW)
-  }
+    @Watch('choosedPicBedForQRCode')
+    choosedPicBedForQRCodeChange (val: string[]) {
+        if (val.length > 0) {
+            this.$nextTick(async () => {
+                const picBedConfig = await this.getConfig('picBed')
+                const config = pick(picBedConfig, ...this.choosedPicBedForQRCode)
+                this.picBedConfigString = JSON.stringify(config)
+            })
+        }
+    }
 
-  closeWindow () {
-    ipcRenderer.send(CLOSE_WINDOW)
-  }
+    handleGetPicPeds = () => {
+        ipcRenderer.send('getPicBeds')
+    }
 
-  openDialog () {
-    ipcRenderer.send(SHOW_MAIN_PAGE_MENU)
-  }
+    handleSelect (index: string) {
+        const type = index.match(/picbeds-/)
+        if (type === null) {
+            this.$router.push({
+                name: index
+            })
+        } else {
+            const picBed = index.replace(/picbeds-/, '')
+            if (this.$builtInPicBed.includes(picBed)) {
+                this.$router.push({
+                    name: picBed
+                })
+            } else {
+                this.$router.push({
+                    name: 'others',
+                    params: {
+                        type: picBed
+                    }
+                })
+            }
+        }
+    }
 
-  openMiniWindow () {
-    ipcRenderer.send('openMiniWindow')
-  }
+    minimizeWindow () {
+        ipcRenderer.send(MINIMIZE_WINDOW)
+    }
 
-  handleCopyPicBedConfig () {
-    clipboard.writeText(this.picBedConfigString)
-    this.$message.success(this.$T('COPY_PICBED_CONFIG_SUCCEED'))
-  }
+    closeWindow () {
+        ipcRenderer.send(CLOSE_WINDOW)
+    }
 
-  getPicBeds (event: IpcRendererEvent, picBeds: IPicBedType[]) {
-    this.picBed = picBeds
-  }
+    openDialog () {
+        ipcRenderer.send(SHOW_MAIN_PAGE_MENU)
+    }
 
-  beforeRouteEnter (to: any, next: any) {
-    next((vm: this) => {
-      vm.defaultActive = to.name
-    })
-  }
+    openMiniWindow () {
+        ipcRenderer.send('openMiniWindow')
+    }
 
-  beforeDestroy () {
-    ipcRenderer.removeListener('getPicBeds', this.getPicBeds)
-  }
+    handleCopyPicBedConfig () {
+        clipboard.writeText(this.picBedConfigString)
+        this.$message.success(this.$T('COPY_PICBED_CONFIG_SUCCEED'))
+    }
+
+    getPicBeds (event: IpcRendererEvent, picBeds: IPicBedType[]) {
+        this.picBed = picBeds
+    }
+
+    beforeRouteEnter (to: any, next: any) {
+        next((vm: this) => {
+            vm.defaultActive = to.name
+        })
+    }
+
+    beforeDestroy () {
+        ipcRenderer.removeListener('getPicBeds', this.getPicBeds)
+    }
 }
 </script>
 <style lang='stylus'>

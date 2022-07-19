@@ -60,84 +60,84 @@
 </template>
 <script lang="ts">
 import {
-  Component,
-  Vue,
-  Prop,
-  Watch
+    Component,
+    Vue,
+    Prop,
+    Watch
 } from 'vue-property-decorator'
 import { cloneDeep, union } from 'lodash'
 
 @Component({
-  name: 'config-form'
+    name: 'config-form'
 })
 export default class extends Vue {
-  @Prop() private config!: any[]
-  @Prop() readonly type!: 'uploader' | 'transformer' | 'plugin'
-  @Prop() readonly id!: string
-  configList = []
-  ruleForm = {}
-  @Watch('config', {
-    deep: true,
-    immediate: true
-  })
-  handleConfigChange (val: any) {
-    this.handleConfig(val)
-  }
-
-  async validate () {
-    return new Promise((resolve) => {
-      // @ts-ignore
-      this.$refs.form.validate((valid: boolean) => {
-        if (valid) {
-          resolve(this.ruleForm)
-        } else {
-          resolve(false)
-          return false
-        }
-      })
+    @Prop() private config!: any[]
+    @Prop() readonly type!: 'uploader' | 'transformer' | 'plugin'
+    @Prop() readonly id!: string
+    configList = []
+    ruleForm = {}
+    @Watch('config', {
+        deep: true,
+        immediate: true
     })
-  }
-
-  getConfigType () {
-    switch (this.type) {
-      case 'plugin': {
-        return this.id
-      }
-      case 'uploader': {
-        return `picBed.${this.id}`
-      }
-      case 'transformer': {
-        return `transformer.${this.id}`
-      }
-      default:
-        return 'unknown'
+    handleConfigChange (val: any) {
+        this.handleConfig(val)
     }
-  }
 
-  async handleConfig (val: any) {
-    this.ruleForm = Object.assign({}, {})
-    const config = await this.getConfig<IPicGoPluginConfig>(this.getConfigType())
-    if (val.length > 0) {
-      this.configList = cloneDeep(val).map((item: any) => {
-        let defaultValue = item.default !== undefined
-          ? item.default
-          : item.type === 'checkbox'
-            ? []
-            : null
-        if (item.type === 'checkbox') {
-          const defaults = item.choices.filter((i: any) => {
-            return i.checked
-          }).map((i: any) => i.value)
-          defaultValue = union(defaultValue, defaults)
-        }
-        if (config && config[item.name] !== undefined) {
-          defaultValue = config[item.name]
-        }
-        this.$set(this.ruleForm, item.name, defaultValue)
-        return item
-      })
+    async validate () {
+        return new Promise((resolve) => {
+            // @ts-ignore
+            this.$refs.form.validate((valid: boolean) => {
+                if (valid) {
+                    resolve(this.ruleForm)
+                } else {
+                    resolve(false)
+                    return false
+                }
+            })
+        })
     }
-  }
+
+    getConfigType () {
+        switch (this.type) {
+            case 'plugin': {
+                return this.id
+            }
+            case 'uploader': {
+                return `picBed.${this.id}`
+            }
+            case 'transformer': {
+                return `transformer.${this.id}`
+            }
+            default:
+                return 'unknown'
+        }
+    }
+
+    async handleConfig (val: any) {
+        this.ruleForm = Object.assign({}, {})
+        const config = await this.getConfig<IPicGoPluginConfig>(this.getConfigType())
+        if (val.length > 0) {
+            this.configList = cloneDeep(val).map((item: any) => {
+                let defaultValue = item.default !== undefined
+                    ? item.default
+                    : item.type === 'checkbox'
+                        ? []
+                        : null
+                if (item.type === 'checkbox') {
+                    const defaults = item.choices.filter((i: any) => {
+                        return i.checked
+                    }).map((i: any) => i.value)
+                    defaultValue = union(defaultValue, defaults)
+                }
+                if (config && config[item.name] !== undefined) {
+                    defaultValue = config[item.name]
+                }
+                this.$set(this.ruleForm, item.name, defaultValue)
+                return item
+            })
+        }
+    }
 }
 </script>
 <style lang='stylus'>

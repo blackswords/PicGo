@@ -32,67 +32,67 @@ import { Component, Vue } from 'vue-property-decorator'
 import ConfigForm from '@/components/ConfigForm.vue'
 import mixin from '@/utils/ConfirmButtonMixin'
 import {
-  ipcRenderer,
-  IpcRendererEvent
+    ipcRenderer,
+    IpcRendererEvent
 } from 'electron'
 import { trimValues } from '@/utils/common'
 
 @Component({
-  name: 'OtherPicBed',
-  mixins: [mixin],
-  components: {
-    ConfigForm
-  }
+    name: 'OtherPicBed',
+    mixins: [mixin],
+    components: {
+        ConfigForm
+    }
 })
 export default class extends Vue {
-  type: string = ''
-  config: any[] = []
-  picBedName: string = ''
-  created () {
-    this.type = this.$route.params.type
-    ipcRenderer.send('getPicBedConfig', this.$route.params.type)
-    ipcRenderer.on('getPicBedConfig', this.getPicBeds)
-  }
-
-  async handleConfirm () {
-    // @ts-ignore
-    const result = await this.$refs.configForm.validate()
-    if (result !== false) {
-      this.saveConfig({
-        [`picBed.${this.type}`]: trimValues(result)
-      })
-      const successNotification = new Notification(this.$T('SETTINGS_RESULT'), {
-        body: this.$T('TIPS_SET_SUCCEED')
-      })
-      successNotification.onclick = () => {
-        return true
-      }
+    type: string = ''
+    config: any[] = []
+    picBedName: string = ''
+    created () {
+        this.type = this.$route.params.type
+        ipcRenderer.send('getPicBedConfig', this.$route.params.type)
+        ipcRenderer.on('getPicBedConfig', this.getPicBeds)
     }
-  }
 
-  setDefaultPicBed (type: string) {
-    this.saveConfig({
-      'picBed.current': type,
-      'picBed.uploader': type
-    })
-    // @ts-ignore 来自mixin的数据
-    this.defaultPicBed = type
-    const successNotification = new Notification(this.$T('SETTINGS_DEFAULT_PICBED'), {
-      body: this.$T('TIPS_SET_SUCCEED')
-    })
-    successNotification.onclick = () => {
-      return true
+    async handleConfirm () {
+        // @ts-ignore
+        const result = await this.$refs.configForm.validate()
+        if (result !== false) {
+            this.saveConfig({
+                [`picBed.${this.type}`]: trimValues(result)
+            })
+            const successNotification = new Notification(this.$T('SETTINGS_RESULT'), {
+                body: this.$T('TIPS_SET_SUCCEED')
+            })
+            successNotification.onclick = () => {
+                return true
+            }
+        }
     }
-  }
 
-  getPicBeds (event: IpcRendererEvent, config: any[], name: string) {
-    this.config = config
-    this.picBedName = name
-  }
+    setDefaultPicBed (type: string) {
+        this.saveConfig({
+            'picBed.current': type,
+            'picBed.uploader': type
+        })
+        // @ts-ignore 来自mixin的数据
+        this.defaultPicBed = type
+        const successNotification = new Notification(this.$T('SETTINGS_DEFAULT_PICBED'), {
+            body: this.$T('TIPS_SET_SUCCEED')
+        })
+        successNotification.onclick = () => {
+            return true
+        }
+    }
 
-  beforeDestroy () {
-    ipcRenderer.removeListener('getPicBedConfig', this.getPicBeds)
-  }
+    getPicBeds (event: IpcRendererEvent, config: any[], name: string) {
+        this.config = config
+        this.picBedName = name
+    }
+
+    beforeDestroy () {
+        ipcRenderer.removeListener('getPicBedConfig', this.getPicBeds)
+    }
 }
 </script>
 <style lang='stylus'>

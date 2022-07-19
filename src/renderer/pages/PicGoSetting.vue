@@ -375,7 +375,7 @@ import pkg from 'root/package.json'
 import { IConfig } from 'picgo'
 import { PICGO_OPEN_FILE, OPEN_URL, CHANGE_LANGUAGE } from '#/events/constants'
 import {
-  ipcRenderer
+    ipcRenderer
 } from 'electron'
 import { Component, Vue } from 'vue-property-decorator'
 import { T, languageList } from '~/universal/i18n'
@@ -384,398 +384,398 @@ const releaseUrl = 'https://api.github.com/repos/Molunerfinn/PicGo/releases/late
 const releaseUrlBackup = 'https://cdn.jsdelivr.net/gh/Molunerfinn/PicGo@latest/package.json'
 const downloadUrl = 'https://github.com/Molunerfinn/PicGo/releases/latest'
 const customLinkRule = (rule: string, value: string, callback: (arg0?: Error) => void) => {
-  if (!/\$url/.test(value)) {
-    return callback(new Error(T('TIPS_MUST_CONTAINS_URL')))
-  } else {
-    return callback()
-  }
+    if (!/\$url/.test(value)) {
+        return callback(new Error(T('TIPS_MUST_CONTAINS_URL')))
+    } else {
+        return callback()
+    }
 }
 
 @Component({
-  name: 'picgo-setting'
+    name: 'picgo-setting'
 })
 export default class extends Vue {
-  form: ISettingForm = {
-    updateHelper: false,
-    showPicBedList: [],
-    autoStart: false,
-    rename: false,
-    autoRename: false,
-    uploadNotification: false,
-    miniWindowOntop: false,
-    logLevel: ['all'],
-    autoCopyUrl: true,
-    checkBetaUpdate: true,
-    useBuiltinClipboard: false,
-    language: 'zh-CN'
-  }
-
-  languageList = languageList.map(item => ({
-    label: item,
-    value: item
-  }))
-
-  currentLanguage = 'zh-CN'
-  picBed: IPicBedType[] = []
-  logFileVisible = false
-  keyBindingVisible = false
-  customLinkVisible = false
-  checkUpdateVisible = false
-  serverVisible = false
-  proxyVisible = false
-  customLink = {
-    value: '$url'
-  }
-
-  shortKey: IShortKeyMap = {
-    upload: ''
-  }
-
-  proxy = ''
-  npmRegistry = ''
-  npmProxy = ''
-  rules = {
-    value: [
-      { validator: customLinkRule, trigger: 'blur' }
-    ]
-  }
-
-  logLevel = {
-    all: this.$T('SETTINGS_LOG_LEVEL_ALL'),
-    success: this.$T('SETTINGS_LOG_LEVEL_SUCCESS'),
-    error: this.$T('SETTINGS_LOG_LEVEL_ERROR'),
-    info: this.$T('SETTINGS_LOG_LEVEL_INFO'),
-    warn: this.$T('SETTINGS_LOG_LEVEL_WARN'),
-    none: this.$T('SETTINGS_LOG_LEVEL_NONE')
-  }
-
-  server = {
-    port: 36677,
-    host: '127.0.0.1',
-    enable: true
-  }
-
-  version = pkg.version
-  latestVersion = ''
-  os = ''
-
-  get needUpdate () {
-    if (this.latestVersion) {
-      return this.compareVersion2Update(this.version, this.latestVersion)
-    } else {
-      return false
+    form: ISettingForm = {
+        updateHelper: false,
+        showPicBedList: [],
+        autoStart: false,
+        rename: false,
+        autoRename: false,
+        uploadNotification: false,
+        miniWindowOntop: false,
+        logLevel: ['all'],
+        autoCopyUrl: true,
+        checkBetaUpdate: true,
+        useBuiltinClipboard: false,
+        language: 'zh-CN'
     }
-  }
 
-  created () {
-    this.os = process.platform
-    ipcRenderer.send('getPicBeds')
-    ipcRenderer.on('getPicBeds', this.getPicBeds)
-    this.initData()
-  }
+    languageList = languageList.map(item => ({
+        label: item,
+        value: item
+    }))
 
-  async initData () {
-    const config = (await this.getConfig<IConfig>())!
-    if (config !== undefined) {
-      const settings = config.settings || {}
-      const picBed = config.picBed
-      this.form.updateHelper = settings.showUpdateTip || false
-      this.form.autoStart = settings.autoStart || false
-      this.form.rename = settings.rename || false
-      this.form.autoRename = settings.autoRename || false
-      this.form.uploadNotification = settings.uploadNotification || false
-      this.form.miniWindowOntop = settings.miniWindowOntop || false
-      this.form.logLevel = this.initLogLevel(settings.logLevel || [])
-      this.form.autoCopyUrl = settings.autoCopy === undefined ? true : settings.autoCopy
-      this.form.checkBetaUpdate = settings.checkBetaUpdate === undefined ? true : settings.checkBetaUpdate
-      this.form.useBuiltinClipboard = settings.useBuiltinClipboard === undefined ? false : settings.useBuiltinClipboard
-      this.form.language = settings.language ?? 'zh-CN'
-      this.currentLanguage = settings.language ?? 'zh-CN'
-      this.customLink.value = settings.customLink || '$url'
-      this.shortKey.upload = settings.shortKey.upload
-      this.proxy = picBed.proxy || ''
-      this.npmRegistry = settings.registry || ''
-      this.npmProxy = settings.proxy || ''
-      this.server = settings.server || {
+    currentLanguage = 'zh-CN'
+    picBed: IPicBedType[] = []
+    logFileVisible = false
+    keyBindingVisible = false
+    customLinkVisible = false
+    checkUpdateVisible = false
+    serverVisible = false
+    proxyVisible = false
+    customLink = {
+        value: '$url'
+    }
+
+    shortKey: IShortKeyMap = {
+        upload: ''
+    }
+
+    proxy = ''
+    npmRegistry = ''
+    npmProxy = ''
+    rules = {
+        value: [
+            { validator: customLinkRule, trigger: 'blur' }
+        ]
+    }
+
+    logLevel = {
+        all: this.$T('SETTINGS_LOG_LEVEL_ALL'),
+        success: this.$T('SETTINGS_LOG_LEVEL_SUCCESS'),
+        error: this.$T('SETTINGS_LOG_LEVEL_ERROR'),
+        info: this.$T('SETTINGS_LOG_LEVEL_INFO'),
+        warn: this.$T('SETTINGS_LOG_LEVEL_WARN'),
+        none: this.$T('SETTINGS_LOG_LEVEL_NONE')
+    }
+
+    server = {
         port: 36677,
         host: '127.0.0.1',
         enable: true
-      }
     }
-  }
 
-  initLogLevel (logLevel: string | string[]) {
-    if (!Array.isArray(logLevel)) {
-      if (logLevel && logLevel.length > 0) {
-        logLevel = [logLevel]
-      } else {
-        logLevel = ['all']
-      }
+    version = pkg.version
+    latestVersion = ''
+    os = ''
+
+    get needUpdate () {
+        if (this.latestVersion) {
+            return this.compareVersion2Update(this.version, this.latestVersion)
+        } else {
+            return false
+        }
     }
-    return logLevel
-  }
 
-  getPicBeds (event: Event, picBeds: IPicBedType[]) {
-    this.picBed = picBeds
-    this.form.showPicBedList = this.picBed.map(item => {
-      if (item.visible) {
-        return item.name
-      }
-      return null
-    }).filter(item => item) as string[]
-  }
+    created () {
+        this.os = process.platform
+        ipcRenderer.send('getPicBeds')
+        ipcRenderer.on('getPicBeds', this.getPicBeds)
+        this.initData()
+    }
 
-  openFile (file: string) {
-    ipcRenderer.send(PICGO_OPEN_FILE, file)
-  }
+    async initData () {
+        const config = (await this.getConfig<IConfig>())!
+        if (config !== undefined) {
+            const settings = config.settings || {}
+            const picBed = config.picBed
+            this.form.updateHelper = settings.showUpdateTip || false
+            this.form.autoStart = settings.autoStart || false
+            this.form.rename = settings.rename || false
+            this.form.autoRename = settings.autoRename || false
+            this.form.uploadNotification = settings.uploadNotification || false
+            this.form.miniWindowOntop = settings.miniWindowOntop || false
+            this.form.logLevel = this.initLogLevel(settings.logLevel || [])
+            this.form.autoCopyUrl = settings.autoCopy === undefined ? true : settings.autoCopy
+            this.form.checkBetaUpdate = settings.checkBetaUpdate === undefined ? true : settings.checkBetaUpdate
+            this.form.useBuiltinClipboard = settings.useBuiltinClipboard === undefined ? false : settings.useBuiltinClipboard
+            this.form.language = settings.language ?? 'zh-CN'
+            this.currentLanguage = settings.language ?? 'zh-CN'
+            this.customLink.value = settings.customLink || '$url'
+            this.shortKey.upload = settings.shortKey.upload
+            this.proxy = picBed.proxy || ''
+            this.npmRegistry = settings.registry || ''
+            this.npmProxy = settings.proxy || ''
+            this.server = settings.server || {
+                port: 36677,
+                host: '127.0.0.1',
+                enable: true
+            }
+        }
+    }
 
-  openLogSetting () {
-    this.logFileVisible = true
-  }
+    initLogLevel (logLevel: string | string[]) {
+        if (!Array.isArray(logLevel)) {
+            if (logLevel && logLevel.length > 0) {
+                logLevel = [logLevel]
+            } else {
+                logLevel = ['all']
+            }
+        }
+        return logLevel
+    }
 
-  keyDetect (type: string, event: KeyboardEvent) {
-    this.shortKey[type] = keyDetect(event).join('+')
-  }
+    getPicBeds (event: Event, picBeds: IPicBedType[]) {
+        this.picBed = picBeds
+        this.form.showPicBedList = this.picBed.map(item => {
+            if (item.visible) {
+                return item.name
+            }
+            return null
+        }).filter(item => item) as string[]
+    }
 
-  async cancelCustomLink () {
-    this.customLinkVisible = false
-    this.customLink.value = await this.getConfig<string>('settings.customLink') || '$url'
-  }
+    openFile (file: string) {
+        ipcRenderer.send(PICGO_OPEN_FILE, file)
+    }
 
-  confirmCustomLink () {
-    // @ts-ignore
-    this.$refs.customLink.validate((valid: boolean) => {
-      if (valid) {
-        this.saveConfig('settings.customLink', this.customLink.value)
+    openLogSetting () {
+        this.logFileVisible = true
+    }
+
+    keyDetect (type: string, event: KeyboardEvent) {
+        this.shortKey[type] = keyDetect(event).join('+')
+    }
+
+    async cancelCustomLink () {
         this.customLinkVisible = false
-        ipcRenderer.send('updateCustomLink')
-      } else {
+        this.customLink.value = await this.getConfig<string>('settings.customLink') || '$url'
+    }
+
+    confirmCustomLink () {
+        // @ts-ignore
+        this.$refs.customLink.validate((valid: boolean) => {
+            if (valid) {
+                this.saveConfig('settings.customLink', this.customLink.value)
+                this.customLinkVisible = false
+                ipcRenderer.send('updateCustomLink')
+            } else {
+                return false
+            }
+        })
+    }
+
+    async cancelProxy () {
+        this.proxyVisible = false
+        this.proxy = await this.getConfig<string>('picBed.proxy') || ''
+    }
+
+    confirmProxy () {
+        this.proxyVisible = false
+        this.saveConfig({
+            'picBed.proxy': this.proxy,
+            'settings.proxy': this.npmProxy,
+            'settings.registry': this.npmRegistry
+        })
+        const successNotification = new Notification(this.$T('SETTINGS_SET_PROXY_AND_MIRROR'), {
+            body: this.$T('TIPS_SET_SUCCEED')
+        })
+        successNotification.onclick = () => {
+            return true
+        }
+    }
+
+    updateHelperChange (val: boolean) {
+        this.saveConfig('settings.showUpdateTip', val)
+    }
+
+    checkBetaUpdateChange (val: boolean) {
+        this.saveConfig('settings.checkBetaUpdate', val)
+    }
+
+    useBuiltinClipboardChange (val: boolean) {
+        this.saveConfig('settings.useBuiltinClipboard', val)
+    }
+
+    handleShowPicBedListChange (val: string[]) {
+        const list = this.picBed.map(item => {
+            if (!val.includes(item.name)) {
+                item.visible = false
+            } else {
+                item.visible = true
+            }
+            return item
+        })
+        this.saveConfig({
+            'picBed.list': list
+        })
+        ipcRenderer.send('getPicBeds')
+    }
+
+    handleAutoStartChange (val: boolean) {
+        this.saveConfig('settings.autoStart', val)
+        ipcRenderer.send('autoStart', val)
+    }
+
+    handleRename (val: boolean) {
+        this.saveConfig({
+            'settings.rename': val
+        })
+    }
+
+    handleAutoRename (val: boolean) {
+        this.saveConfig({
+            'settings.autoRename': val
+        })
+    }
+
+    compareVersion2Update (current: string, latest: string) {
+        const currentVersion = current.split('.').map(item => parseInt(item))
+        const latestVersion = latest.split('.').map(item => parseInt(item))
+
+        for (let i = 0; i < 3; i++) {
+            if (currentVersion[i] < latestVersion[i]) {
+                return true
+            }
+            if (currentVersion[i] > latestVersion[i]) {
+                return false
+            }
+        }
         return false
-      }
-    })
-  }
-
-  async cancelProxy () {
-    this.proxyVisible = false
-    this.proxy = await this.getConfig<string>('picBed.proxy') || ''
-  }
-
-  confirmProxy () {
-    this.proxyVisible = false
-    this.saveConfig({
-      'picBed.proxy': this.proxy,
-      'settings.proxy': this.npmProxy,
-      'settings.registry': this.npmRegistry
-    })
-    const successNotification = new Notification(this.$T('SETTINGS_SET_PROXY_AND_MIRROR'), {
-      body: this.$T('TIPS_SET_SUCCEED')
-    })
-    successNotification.onclick = () => {
-      return true
     }
-  }
 
-  updateHelperChange (val: boolean) {
-    this.saveConfig('settings.showUpdateTip', val)
-  }
+    checkUpdate () {
+        this.checkUpdateVisible = true
+        this.$http.get(releaseUrl)
+            .then(res => {
+                this.latestVersion = res.data.name
+            }).catch(async () => {
+                this.$http.get(releaseUrlBackup)
+                    .then(res => {
+                        this.latestVersion = res.data.version
+                    }).catch(() => {
+                        this.latestVersion = this.$T('TIPS_NETWORK_ERROR')
+                    })
+            })
+    }
 
-  checkBetaUpdateChange (val: boolean) {
-    this.saveConfig('settings.checkBetaUpdate', val)
-  }
+    confirmCheckVersion () {
+        if (this.needUpdate) {
+            ipcRenderer.send(OPEN_URL, downloadUrl)
+        }
+        this.checkUpdateVisible = false
+    }
 
-  useBuiltinClipboardChange (val: boolean) {
-    this.saveConfig('settings.useBuiltinClipboard', val)
-  }
+    cancelCheckVersion () {
+        this.checkUpdateVisible = false
+    }
 
-  handleShowPicBedListChange (val: string[]) {
-    const list = this.picBed.map(item => {
-      if (!val.includes(item.name)) {
-        item.visible = false
-      } else {
-        item.visible = true
-      }
-      return item
-    })
-    this.saveConfig({
-      'picBed.list': list
-    })
-    ipcRenderer.send('getPicBeds')
-  }
+    handleUploadNotification (val: boolean) {
+        this.saveConfig({
+            'settings.uploadNotification': val
+        })
+    }
 
-  handleAutoStartChange (val: boolean) {
-    this.saveConfig('settings.autoStart', val)
-    ipcRenderer.send('autoStart', val)
-  }
+    handleMiniWindowOntop (val: boolean) {
+        this.saveConfig('settings.miniWindowOntop', val)
+        this.$message.info(this.$T('TIPS_NEED_RELOAD'))
+    }
 
-  handleRename (val: boolean) {
-    this.saveConfig({
-      'settings.rename': val
-    })
-  }
+    handleAutoCopyUrl (val: boolean) {
+        this.saveConfig('settings.autoCopy', val)
+        const successNotification = new Notification(this.$T('SETTINGS_AUTO_COPY_URL_AFTER_UPLOAD'), {
+            body: this.$T('TIPS_SET_SUCCEED')
+        })
+        successNotification.onclick = () => {
+            return true
+        }
+    }
 
-  handleAutoRename (val: boolean) {
-    this.saveConfig({
-      'settings.autoRename': val
-    })
-  }
+    confirmLogLevelSetting () {
+        if (this.form.logLevel.length === 0) {
+            return this.$message.error(this.$T('TIPS_PLEASE_CHOOSE_LOG_LEVEL'))
+        }
+        this.saveConfig({
+            'settings.logLevel': this.form.logLevel
+        })
+        const successNotification = new Notification(this.$T('SETTINGS_SET_LOG_FILE'), {
+            body: this.$T('TIPS_SET_SUCCEED')
+        })
+        successNotification.onclick = () => {
+            return true
+        }
+        this.logFileVisible = false
+    }
 
-  compareVersion2Update (current: string, latest: string) {
-    const currentVersion = current.split('.').map(item => parseInt(item))
-    const latestVersion = latest.split('.').map(item => parseInt(item))
+    async cancelLogLevelSetting () {
+        this.logFileVisible = false
+        let logLevel = await this.getConfig<string | string[]>('settings.logLevel')
+        if (!Array.isArray(logLevel)) {
+            if (logLevel && logLevel.length > 0) {
+                logLevel = [logLevel]
+            } else {
+                logLevel = ['all']
+            }
+        }
+        this.form.logLevel = logLevel
+    }
 
-    for (let i = 0; i < 3; i++) {
-      if (currentVersion[i] < latestVersion[i]) {
-        return true
-      }
-      if (currentVersion[i] > latestVersion[i]) {
+    confirmServerSetting () {
+        // @ts-ignore
+        this.server.port = parseInt(this.server.port, 10)
+        this.saveConfig({
+            'settings.server': this.server
+        })
+        const successNotification = new Notification(this.$T('SETTINGS_SET_PICGO_SERVER'), {
+            body: this.$T('TIPS_SET_SUCCEED')
+        })
+        successNotification.onclick = () => {
+            return true
+        }
+        this.serverVisible = false
+        ipcRenderer.send('updateServer')
+    }
+
+    async cancelServerSetting () {
+        this.serverVisible = false
+        this.server = await this.getConfig('settings.server') || {
+            port: 36677,
+            host: '127.0.0.1',
+            enable: true
+        }
+    }
+
+    handleLevelDisabled (val: string) {
+        const currentLevel = val
+        let flagLevel
+        const result = this.form.logLevel.some(item => {
+            if (item === 'all' || item === 'none') {
+                flagLevel = item
+            }
+            return (item === 'all' || item === 'none')
+        })
+        if (result) {
+            if (currentLevel !== flagLevel) {
+                return true
+            }
+        } else if (this.form.logLevel.length > 0) {
+            if (val === 'all' || val === 'none') {
+                return true
+            }
+        }
         return false
-      }
     }
-    return false
-  }
 
-  checkUpdate () {
-    this.checkUpdateVisible = true
-    this.$http.get(releaseUrl)
-      .then(res => {
-        this.latestVersion = res.data.name
-      }).catch(async () => {
-        this.$http.get(releaseUrlBackup)
-          .then(res => {
-            this.latestVersion = res.data.version
-          }).catch(() => {
-            this.latestVersion = this.$T('TIPS_NETWORK_ERROR')
-          })
-      })
-  }
-
-  confirmCheckVersion () {
-    if (this.needUpdate) {
-      ipcRenderer.send(OPEN_URL, downloadUrl)
+    handleLanguageChange (val: string) {
+        this.$i18n.setLanguage(val)
+        this.forceUpdate()
+        ipcRenderer.send(CHANGE_LANGUAGE, val)
+        this.saveConfig({
+            'settings.language': val
+        })
     }
-    this.checkUpdateVisible = false
-  }
 
-  cancelCheckVersion () {
-    this.checkUpdateVisible = false
-  }
-
-  handleUploadNotification (val: boolean) {
-    this.saveConfig({
-      'settings.uploadNotification': val
-    })
-  }
-
-  handleMiniWindowOntop (val: boolean) {
-    this.saveConfig('settings.miniWindowOntop', val)
-    this.$message.info(this.$T('TIPS_NEED_RELOAD'))
-  }
-
-  handleAutoCopyUrl (val: boolean) {
-    this.saveConfig('settings.autoCopy', val)
-    const successNotification = new Notification(this.$T('SETTINGS_AUTO_COPY_URL_AFTER_UPLOAD'), {
-      body: this.$T('TIPS_SET_SUCCEED')
-    })
-    successNotification.onclick = () => {
-      return true
+    goConfigPage () {
+        ipcRenderer.send(OPEN_URL, 'https://picgo.github.io/PicGo-Doc/zh/guide/config.html#picgo设置')
     }
-  }
 
-  confirmLogLevelSetting () {
-    if (this.form.logLevel.length === 0) {
-      return this.$message.error(this.$T('TIPS_PLEASE_CHOOSE_LOG_LEVEL'))
+    goShortCutPage () {
+        this.$router.push('shortKey')
     }
-    this.saveConfig({
-      'settings.logLevel': this.form.logLevel
-    })
-    const successNotification = new Notification(this.$T('SETTINGS_SET_LOG_FILE'), {
-      body: this.$T('TIPS_SET_SUCCEED')
-    })
-    successNotification.onclick = () => {
-      return true
+
+    beforeDestroy () {
+        ipcRenderer.removeListener('getPicBeds', this.getPicBeds)
     }
-    this.logFileVisible = false
-  }
-
-  async cancelLogLevelSetting () {
-    this.logFileVisible = false
-    let logLevel = await this.getConfig<string | string[]>('settings.logLevel')
-    if (!Array.isArray(logLevel)) {
-      if (logLevel && logLevel.length > 0) {
-        logLevel = [logLevel]
-      } else {
-        logLevel = ['all']
-      }
-    }
-    this.form.logLevel = logLevel
-  }
-
-  confirmServerSetting () {
-    // @ts-ignore
-    this.server.port = parseInt(this.server.port, 10)
-    this.saveConfig({
-      'settings.server': this.server
-    })
-    const successNotification = new Notification(this.$T('SETTINGS_SET_PICGO_SERVER'), {
-      body: this.$T('TIPS_SET_SUCCEED')
-    })
-    successNotification.onclick = () => {
-      return true
-    }
-    this.serverVisible = false
-    ipcRenderer.send('updateServer')
-  }
-
-  async cancelServerSetting () {
-    this.serverVisible = false
-    this.server = await this.getConfig('settings.server') || {
-      port: 36677,
-      host: '127.0.0.1',
-      enable: true
-    }
-  }
-
-  handleLevelDisabled (val: string) {
-    const currentLevel = val
-    let flagLevel
-    const result = this.form.logLevel.some(item => {
-      if (item === 'all' || item === 'none') {
-        flagLevel = item
-      }
-      return (item === 'all' || item === 'none')
-    })
-    if (result) {
-      if (currentLevel !== flagLevel) {
-        return true
-      }
-    } else if (this.form.logLevel.length > 0) {
-      if (val === 'all' || val === 'none') {
-        return true
-      }
-    }
-    return false
-  }
-
-  handleLanguageChange (val: string) {
-    this.$i18n.setLanguage(val)
-    this.forceUpdate()
-    ipcRenderer.send(CHANGE_LANGUAGE, val)
-    this.saveConfig({
-      'settings.language': val
-    })
-  }
-
-  goConfigPage () {
-    ipcRenderer.send(OPEN_URL, 'https://picgo.github.io/PicGo-Doc/zh/guide/config.html#picgo设置')
-  }
-
-  goShortCutPage () {
-    this.$router.push('shortKey')
-  }
-
-  beforeDestroy () {
-    ipcRenderer.removeListener('getPicBeds', this.getPicBeds)
-  }
 }
 </script>
 <style lang='stylus'>

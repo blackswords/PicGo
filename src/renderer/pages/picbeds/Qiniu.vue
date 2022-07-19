@@ -76,45 +76,45 @@ import { Component, Vue } from 'vue-property-decorator'
 import mixin from '@/utils/ConfirmButtonMixin'
 import { trimValues } from '@/utils/common'
 @Component({
-  name: 'qiniu',
-  mixins: [mixin]
+    name: 'qiniu',
+    mixins: [mixin]
 })
 export default class extends Vue {
-  form: IQiniuConfig = {
-    accessKey: '',
-    secretKey: '',
-    bucket: '',
-    url: '',
-    area: '',
-    options: '',
-    path: ''
-  }
-
-  async created () {
-    const config = await this.getConfig<IQiniuConfig>('picBed.qiniu')
-    if (config) {
-      this.form = Object.assign({}, config)
+    form: IQiniuConfig = {
+        accessKey: '',
+        secretKey: '',
+        bucket: '',
+        url: '',
+        area: '',
+        options: '',
+        path: ''
     }
-  }
 
-  confirm () {
-    // @ts-ignore
-    this.$refs.qiniu.validate((valid) => {
-      if (valid) {
-        this.saveConfig({
-          'picBed.qiniu': trimValues(this.form)
-        })
-        const successNotification = new Notification('设置结果', {
-          body: '设置成功'
-        })
-        successNotification.onclick = () => {
-          return true
+    async created () {
+        const config = await this.getConfig<IQiniuConfig>('picBed.qiniu')
+        if (config) {
+            this.form = Object.assign({}, config)
         }
-      } else {
-        return false
-      }
-    })
-  }
+    }
+
+    confirm () {
+        // @ts-ignore
+        this.$refs.qiniu.validate((valid) => {
+            if (valid) {
+                this.saveConfig({
+                    'picBed.qiniu': trimValues(this.form)
+                })
+                const successNotification = new Notification('设置结果', {
+                    body: '设置成功'
+                })
+                successNotification.onclick = () => {
+                    return true
+                }
+            } else {
+                return false
+            }
+        })
+    }
 }
 </script>
 <style lang='stylus'>

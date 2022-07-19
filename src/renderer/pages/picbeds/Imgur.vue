@@ -41,40 +41,40 @@ import { Component, Vue } from 'vue-property-decorator'
 import mixin from '@/utils/ConfirmButtonMixin'
 import { trimValues } from '@/utils/common'
 @Component({
-  name: 'imgur',
-  mixins: [mixin]
+    name: 'imgur',
+    mixins: [mixin]
 })
 export default class extends Vue {
-  form: IImgurConfig = {
-    clientId: '',
-    proxy: ''
-  }
-
-  async created () {
-    const config = await this.getConfig<IImgurConfig>('picBed.imgur')
-    if (config) {
-      this.form = Object.assign({}, config)
+    form: IImgurConfig = {
+        clientId: '',
+        proxy: ''
     }
-  }
 
-  confirm () {
-    // @ts-ignore
-    this.$refs.imgur.validate((valid) => {
-      if (valid) {
-        this.saveConfig({
-          'picBed.imgur': trimValues(this.form)
-        })
-        const successNotification = new Notification('设置结果', {
-          body: '设置成功'
-        })
-        successNotification.onclick = () => {
-          return true
+    async created () {
+        const config = await this.getConfig<IImgurConfig>('picBed.imgur')
+        if (config) {
+            this.form = Object.assign({}, config)
         }
-      } else {
-        return false
-      }
-    })
-  }
+    }
+
+    confirm () {
+        // @ts-ignore
+        this.$refs.imgur.validate((valid) => {
+            if (valid) {
+                this.saveConfig({
+                    'picBed.imgur': trimValues(this.form)
+                })
+                const successNotification = new Notification('设置结果', {
+                    body: '设置成功'
+                })
+                successNotification.onclick = () => {
+                    return true
+                }
+            } else {
+                return false
+            }
+        })
+    }
 }
 </script>
 <style lang='stylus'>

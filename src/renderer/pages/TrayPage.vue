@@ -33,89 +33,89 @@ import { IResult } from '@picgo/store/dist/types'
 import { PASTE_TEXT } from '#/events/constants'
 
 @Component({
-  name: 'tray-page',
-  mixins: [mixin]
+    name: 'tray-page',
+    mixins: [mixin]
 })
 export default class extends Vue {
-  files: IResult<ImgInfo>[] = []
-  notification = {
-    title: this.$T('COPY_LINK_SUCCEED'),
-    body: '',
-    icon: ''
-  }
-
-  clipboardFiles: ImgInfo[] = []
-  uploadFlag = false
-  get reverseList () {
-    return this.files.slice().reverse()
-  }
-
-  async getData () {
-    this.files = (await this.$$db.get<ImgInfo>({ orderBy: 'desc', limit: 5 })).data
-  }
-
-  async copyTheLink (item: ImgInfo) {
-    this.notification.body = item.imgUrl!
-    this.notification.icon = item.imgUrl!
-    const myNotification = new Notification(this.notification.title, this.notification)
-    ipcRenderer.invoke(PASTE_TEXT, item)
-    myNotification.onclick = () => {
-      return true
+    files: IResult<ImgInfo>[] = []
+    notification = {
+        title: this.$T('COPY_LINK_SUCCEED'),
+        body: '',
+        icon: ''
     }
-  }
 
-  calcHeight (width: number, height: number): number {
-    return height * 160 / width
-  }
-
-  disableDragFile () {
-    window.addEventListener('dragover', (e) => {
-      e = e || event
-      e.preventDefault()
-    }, false)
-    window.addEventListener('drop', (e) => {
-      e = e || event
-      e.preventDefault()
-    }, false)
-  }
-
-  uploadClipboardFiles () {
-    if (this.uploadFlag) {
-      return
+    clipboardFiles: ImgInfo[] = []
+    uploadFlag = false
+    get reverseList () {
+        return this.files.slice().reverse()
     }
-    this.uploadFlag = true
-    ipcRenderer.send('uploadClipboardFiles')
-  }
 
-  mounted () {
-    this.disableDragFile()
-    this.getData()
-    ipcRenderer.on('dragFiles', async (event: Event, files: string[]) => {
-      for (let i = 0; i < files.length; i++) {
-        const item = files[i]
-        await this.$$db.insert(item)
-      }
-      this.files = (await this.$$db.get<ImgInfo>({ orderBy: 'desc', limit: 5 })).data
-    })
-    ipcRenderer.on('clipboardFiles', (event: Event, files: ImgInfo[]) => {
-      this.clipboardFiles = files
-    })
-    ipcRenderer.on('uploadFiles', async () => {
-      this.files = (await this.$$db.get<ImgInfo>({ orderBy: 'desc', limit: 5 })).data
-      console.log(this.files)
-      this.uploadFlag = false
-    })
-    ipcRenderer.on('updateFiles', () => {
-      this.getData()
-    })
-  }
+    async getData () {
+        this.files = (await this.$$db.get<ImgInfo>({ orderBy: 'desc', limit: 5 })).data
+    }
 
-  beforeDestroy () {
-    ipcRenderer.removeAllListeners('dragFiles')
-    ipcRenderer.removeAllListeners('clipboardFiles')
-    ipcRenderer.removeAllListeners('uploadClipboardFiles')
-    ipcRenderer.removeAllListeners('updateFiles')
-  }
+    async copyTheLink (item: ImgInfo) {
+        this.notification.body = item.imgUrl!
+        this.notification.icon = item.imgUrl!
+        const myNotification = new Notification(this.notification.title, this.notification)
+        ipcRenderer.invoke(PASTE_TEXT, item)
+        myNotification.onclick = () => {
+            return true
+        }
+    }
+
+    calcHeight (width: number, height: number): number {
+        return height * 160 / width
+    }
+
+    disableDragFile () {
+        window.addEventListener('dragover', (e) => {
+            e = e || event
+            e.preventDefault()
+        }, false)
+        window.addEventListener('drop', (e) => {
+            e = e || event
+            e.preventDefault()
+        }, false)
+    }
+
+    uploadClipboardFiles () {
+        if (this.uploadFlag) {
+            return
+        }
+        this.uploadFlag = true
+        ipcRenderer.send('uploadClipboardFiles')
+    }
+
+    mounted () {
+        this.disableDragFile()
+        this.getData()
+        ipcRenderer.on('dragFiles', async (event: Event, files: string[]) => {
+            for (let i = 0; i < files.length; i++) {
+                const item = files[i]
+                await this.$$db.insert(item)
+            }
+            this.files = (await this.$$db.get<ImgInfo>({ orderBy: 'desc', limit: 5 })).data
+        })
+        ipcRenderer.on('clipboardFiles', (event: Event, files: ImgInfo[]) => {
+            this.clipboardFiles = files
+        })
+        ipcRenderer.on('uploadFiles', async () => {
+            this.files = (await this.$$db.get<ImgInfo>({ orderBy: 'desc', limit: 5 })).data
+            console.log(this.files)
+            this.uploadFlag = false
+        })
+        ipcRenderer.on('updateFiles', () => {
+            this.getData()
+        })
+    }
+
+    beforeDestroy () {
+        ipcRenderer.removeAllListeners('dragFiles')
+        ipcRenderer.removeAllListeners('clipboardFiles')
+        ipcRenderer.removeAllListeners('uploadClipboardFiles')
+        ipcRenderer.removeAllListeners('updateFiles')
+    }
 }
 </script>
 

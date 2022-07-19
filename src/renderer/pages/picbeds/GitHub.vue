@@ -61,43 +61,43 @@ import { Component, Vue } from 'vue-property-decorator'
 import mixin from '@/utils/ConfirmButtonMixin'
 import { trimValues } from '@/utils/common'
 @Component({
-  name: 'github',
-  mixins: [mixin]
+    name: 'github',
+    mixins: [mixin]
 })
 export default class extends Vue {
-  form: IGitHubConfig = {
-    repo: '',
-    token: '',
-    path: '',
-    customUrl: '',
-    branch: ''
-  }
-
-  async created () {
-    const config = await this.getConfig<IGitHubConfig>('picBed.github')
-    if (config) {
-      this.form = Object.assign({}, config)
+    form: IGitHubConfig = {
+        repo: '',
+        token: '',
+        path: '',
+        customUrl: '',
+        branch: ''
     }
-  }
 
-  confirm () {
-    // @ts-ignore
-    this.$refs.github.validate((valid) => {
-      if (valid) {
-        this.saveConfig({
-          'picBed.github': trimValues(this.form)
-        })
-        const successNotification = new Notification('设置结果', {
-          body: '设置成功'
-        })
-        successNotification.onclick = () => {
-          return true
+    async created () {
+        const config = await this.getConfig<IGitHubConfig>('picBed.github')
+        if (config) {
+            this.form = Object.assign({}, config)
         }
-      } else {
-        return false
-      }
-    })
-  }
+    }
+
+    confirm () {
+        // @ts-ignore
+        this.$refs.github.validate((valid) => {
+            if (valid) {
+                this.saveConfig({
+                    'picBed.github': trimValues(this.form)
+                })
+                const successNotification = new Notification('设置结果', {
+                    body: '设置成功'
+                })
+                successNotification.onclick = () => {
+                    return true
+                }
+            } else {
+                return false
+            }
+        })
+    }
 }
 </script>
 <style lang='stylus'>

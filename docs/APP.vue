@@ -30,58 +30,58 @@
 </template>
 <script>
 export default {
-  name: '',
-  data () {
-    return {
-      version: '',
-      year: new Date().getFullYear(),
-      itemList: [
-        {
-          url: 'https://cdn.jsdelivr.net/gh/Molunerfinn/test/picgo-site/second.png',
-          title: '精致设计',
-          desc: 'macOS系统下，支持拖拽至menubar图标实现上传。menubar app 窗口显示最新上传的5张图片以及剪贴板里的图片。点击图片自动将上传的链接复制到剪贴板。（Windows平台不支持）'
-        },
-        {
-          url: 'https://cdn.jsdelivr.net/gh/Molunerfinn/test/picgo-site/third.png',
-          title: 'Mini小窗',
-          desc: 'Windows以及Linux系统下提供一个mini悬浮窗用于用户拖拽上传，节约你宝贵的桌面空间。'
-        },
-        {
-          url: 'https://cdn.jsdelivr.net/gh/Molunerfinn/test/picgo-site/forth.png',
-          title: '便捷管理',
-          desc: '查看你的上传记录，重复使用更方便。支持点击图片大图查看。支持删除图片（仅本地记录），让界面更加干净。'
-        },
-        {
-          url: 'https://cdn.jsdelivr.net/gh/Molunerfinn/test/picgo-site/fifth.png',
-          title: '可选图床',
-          desc: '默认支持微博图床、七牛图床、腾讯云COS、又拍云、GitHub、SM.MS、阿里云OSS、Imgur。方便不同图床的上传需求。2.0版本开始更可以自己开发插件实现其他图床的上传需求。'
-        },
-        {
-          url: 'https://cdn.jsdelivr.net/gh/Molunerfinn/test/picgo-site/sixth.png',
-          title: '多样链接',
-          desc: '支持5种默认剪贴板链接格式，包括一种自定义格式，让你的文本编辑游刃有余。'
-        },
-        {
-          url: 'https://cdn.jsdelivr.net/gh/Molunerfinn/test/picgo-site/seventh.png',
-          title: '插件系统',
-          desc: '2.0版本开始支持插件系统，让PicGo发挥无限潜能，成为一个极致的效率工具。'
+    name: '',
+    data () {
+        return {
+            version: '',
+            year: new Date().getFullYear(),
+            itemList: [
+                {
+                    url: 'https://cdn.jsdelivr.net/gh/Molunerfinn/test/picgo-site/second.png',
+                    title: '精致设计',
+                    desc: 'macOS系统下，支持拖拽至menubar图标实现上传。menubar app 窗口显示最新上传的5张图片以及剪贴板里的图片。点击图片自动将上传的链接复制到剪贴板。（Windows平台不支持）'
+                },
+                {
+                    url: 'https://cdn.jsdelivr.net/gh/Molunerfinn/test/picgo-site/third.png',
+                    title: 'Mini小窗',
+                    desc: 'Windows以及Linux系统下提供一个mini悬浮窗用于用户拖拽上传，节约你宝贵的桌面空间。'
+                },
+                {
+                    url: 'https://cdn.jsdelivr.net/gh/Molunerfinn/test/picgo-site/forth.png',
+                    title: '便捷管理',
+                    desc: '查看你的上传记录，重复使用更方便。支持点击图片大图查看。支持删除图片（仅本地记录），让界面更加干净。'
+                },
+                {
+                    url: 'https://cdn.jsdelivr.net/gh/Molunerfinn/test/picgo-site/fifth.png',
+                    title: '可选图床',
+                    desc: '默认支持微博图床、七牛图床、腾讯云COS、又拍云、GitHub、SM.MS、阿里云OSS、Imgur。方便不同图床的上传需求。2.0版本开始更可以自己开发插件实现其他图床的上传需求。'
+                },
+                {
+                    url: 'https://cdn.jsdelivr.net/gh/Molunerfinn/test/picgo-site/sixth.png',
+                    title: '多样链接',
+                    desc: '支持5种默认剪贴板链接格式，包括一种自定义格式，让你的文本编辑游刃有余。'
+                },
+                {
+                    url: 'https://cdn.jsdelivr.net/gh/Molunerfinn/test/picgo-site/seventh.png',
+                    title: '插件系统',
+                    desc: '2.0版本开始支持插件系统，让PicGo发挥无限潜能，成为一个极致的效率工具。'
+                }
+            ]
         }
-      ]
-    }
-  },
-  created () {
-    this.getVersion()
-  },
-  methods: {
-    goLink (link) {
-      window.open(link, '_blank')
     },
-    async getVersion () {
-      const release = 'https://api.github.com/repos/Molunerfinn/PicGo/releases/latest'
-      const res = await this.$http.get(release)
-      this.version = res.data.name
+    created () {
+        this.getVersion()
+    },
+    methods: {
+        goLink (link) {
+            window.open(link, '_blank')
+        },
+        async getVersion () {
+            const release = 'https://api.github.com/repos/Molunerfinn/PicGo/releases/latest'
+            const res = await this.$http.get(release)
+            this.version = res.data.name
+        }
     }
-  }
 }
 </script>
 <style lang='stylus'>

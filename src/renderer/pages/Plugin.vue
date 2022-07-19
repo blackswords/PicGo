@@ -103,347 +103,347 @@
 </template>
 <script lang="ts">
 import {
-  Component,
-  Vue,
-  Watch
+    Component,
+    Vue,
+    Watch
 } from 'vue-property-decorator'
 import ConfigForm from '@/components/ConfigForm.vue'
 import { debounce } from 'lodash'
 import {
-  ipcRenderer,
-  IpcRendererEvent
+    ipcRenderer,
+    IpcRendererEvent
 } from 'electron'
 import { handleStreamlinePluginName } from '~/universal/utils/common'
 import {
-  OPEN_URL,
-  RELOAD_APP,
-  PICGO_CONFIG_PLUGIN,
-  PICGO_HANDLE_PLUGIN_ING,
-  PICGO_TOGGLE_PLUGIN,
-  SHOW_PLUGIN_PAGE_MENU
+    OPEN_URL,
+    RELOAD_APP,
+    PICGO_CONFIG_PLUGIN,
+    PICGO_HANDLE_PLUGIN_ING,
+    PICGO_TOGGLE_PLUGIN,
+    SHOW_PLUGIN_PAGE_MENU
 } from '#/events/constants'
 
 @Component({
-  name: 'plugin',
-  components: {
-    ConfigForm
-  }
+    name: 'plugin',
+    components: {
+        ConfigForm
+    }
 })
 export default class extends Vue {
-  searchText = ''
-  pluginList: IPicGoPlugin[] = []
-  menu: Electron.Menu | null = null
-  config: any[] = []
-  currentType = ''
-  configName = ''
-  dialogVisible = false
-  pluginNameList: string[] = []
-  loading = true
-  needReload = false
-  pluginListToolTip = this.$T('PLUGIN_LIST')
-  importLocalPluginToolTip = this.$T('PLUGIN_IMPORT_LOCAL')
-  id = ''
-  os = ''
-  defaultLogo: string = 'this.src="https://cdn.jsdelivr.net/gh/Molunerfinn/PicGo@dev/public/roundLogo.png"'
-  get npmSearchText () {
-    return this.searchText.match('picgo-plugin-')
-      ? this.searchText
-      : this.searchText !== ''
-        ? `picgo-plugin-${this.searchText}`
-        : this.searchText
-  }
-
-  @Watch('npmSearchText')
-  onNpmSearchTextChange (val: string) {
-    if (val) {
-      this.loading = true
-      this.pluginList = []
-      this.getSearchResult(val)
-    } else {
-      this.getPluginList()
+    searchText = ''
+    pluginList: IPicGoPlugin[] = []
+    menu: Electron.Menu | null = null
+    config: any[] = []
+    currentType = ''
+    configName = ''
+    dialogVisible = false
+    pluginNameList: string[] = []
+    loading = true
+    needReload = false
+    pluginListToolTip = this.$T('PLUGIN_LIST')
+    importLocalPluginToolTip = this.$T('PLUGIN_IMPORT_LOCAL')
+    id = ''
+    os = ''
+    defaultLogo: string = 'this.src="https://cdn.jsdelivr.net/gh/Molunerfinn/PicGo@dev/public/roundLogo.png"'
+    get npmSearchText () {
+        return this.searchText.match('picgo-plugin-')
+            ? this.searchText
+            : this.searchText !== ''
+                ? `picgo-plugin-${this.searchText}`
+                : this.searchText
     }
-  }
 
-  @Watch('dialogVisible')
-  onDialogVisible (val: boolean) {
-    if (val) {
-      // @ts-ignore
-      document.querySelector('.main-content.el-row').style.zIndex = 101
-    } else {
-      // @ts-ignore
-      document.querySelector('.main-content.el-row').style.zIndex = 10
+    @Watch('npmSearchText')
+    onNpmSearchTextChange (val: string) {
+        if (val) {
+            this.loading = true
+            this.pluginList = []
+            this.getSearchResult(val)
+        } else {
+            this.getPluginList()
+        }
     }
-  }
 
-  async created () {
-    this.os = process.platform
-    ipcRenderer.on('hideLoading', () => {
-      this.loading = false
-    })
-    ipcRenderer.on('pluginList', (evt: IpcRendererEvent, list: IPicGoPlugin[]) => {
-      this.pluginList = list
-      this.pluginNameList = list.map(item => item.fullName)
-      this.loading = false
-    })
-    ipcRenderer.on('installPlugin', (evt: IpcRendererEvent, { success, body }: {
-      success: boolean,
-      body: string
-    }) => {
-      this.loading = false
-      this.pluginList.forEach(item => {
-        if (item.fullName === body) {
-          item.ing = false
-          item.hasInstall = success
+    @Watch('dialogVisible')
+    onDialogVisible (val: boolean) {
+        if (val) {
+            // @ts-ignore
+            document.querySelector('.main-content.el-row').style.zIndex = 101
+        } else {
+            // @ts-ignore
+            document.querySelector('.main-content.el-row').style.zIndex = 10
         }
-      })
-    })
-    ipcRenderer.on('updateSuccess', (evt: IpcRendererEvent, plugin: string) => {
-      this.loading = false
-      this.pluginList.forEach(item => {
-        if (item.fullName === plugin) {
-          item.ing = false
-          item.hasInstall = true
+    }
+
+    async created () {
+        this.os = process.platform
+        ipcRenderer.on('hideLoading', () => {
+            this.loading = false
+        })
+        ipcRenderer.on('pluginList', (evt: IpcRendererEvent, list: IPicGoPlugin[]) => {
+            this.pluginList = list
+            this.pluginNameList = list.map(item => item.fullName)
+            this.loading = false
+        })
+        ipcRenderer.on('installPlugin', (evt: IpcRendererEvent, { success, body }: {
+            success: boolean,
+            body: string
+        }) => {
+            this.loading = false
+            this.pluginList.forEach(item => {
+                if (item.fullName === body) {
+                    item.ing = false
+                    item.hasInstall = success
+                }
+            })
+        })
+        ipcRenderer.on('updateSuccess', (evt: IpcRendererEvent, plugin: string) => {
+            this.loading = false
+            this.pluginList.forEach(item => {
+                if (item.fullName === plugin) {
+                    item.ing = false
+                    item.hasInstall = true
+                }
+                this.getPicBeds()
+            })
+            this.handleReload()
+            this.getPluginList()
+        })
+        ipcRenderer.on('uninstallSuccess', (evt: IpcRendererEvent, plugin: string) => {
+            this.loading = false
+            this.pluginList = this.pluginList.filter(item => {
+                if (item.fullName === plugin) { // restore Uploader & Transformer after uninstalling
+                    if (item.config.transformer.name) {
+                        this.handleRestoreState('transformer', item.config.transformer.name)
+                    }
+                    if (item.config.uploader.name) {
+                        this.handleRestoreState('uploader', item.config.uploader.name)
+                    }
+                    this.getPicBeds()
+                }
+                return item.fullName !== plugin
+            })
+            this.pluginNameList = this.pluginNameList.filter(item => item !== plugin)
+        })
+        ipcRenderer.on(PICGO_CONFIG_PLUGIN, (evt: IpcRendererEvent, currentType: string, configName: string, config: any) => {
+            this.currentType = currentType
+            this.configName = configName
+            this.dialogVisible = true
+            this.config = config
+        })
+        ipcRenderer.on(PICGO_HANDLE_PLUGIN_ING, (evt: IpcRendererEvent, fullName: string) => {
+            this.pluginList.forEach(item => {
+                if (item.fullName === fullName || (item.name === fullName)) {
+                    item.ing = true
+                }
+            })
+            this.loading = true
+        })
+        ipcRenderer.on(PICGO_TOGGLE_PLUGIN, (evt: IpcRendererEvent, fullName: string, enabled: boolean) => {
+            const plugin = this.pluginList.find(item => item.fullName === fullName)
+            if (plugin) {
+                plugin.enabled = enabled
+                this.getPicBeds()
+                this.needReload = true
+            }
+        })
+        this.getPluginList()
+        this.getSearchResult = debounce(this.getSearchResult, 50)
+        this.needReload = await this.getConfig<boolean>('needReload') || false
+    }
+
+    async buildContextMenu (plugin: IPicGoPlugin) {
+        ipcRenderer.send(SHOW_PLUGIN_PAGE_MENU, plugin)
+    }
+
+    getPluginList () {
+        ipcRenderer.send('getPluginList')
+    }
+
+    getPicBeds () {
+        ipcRenderer.send('getPicBeds')
+    }
+
+    installPlugin (item: IPicGoPlugin) {
+        if (!item.gui) {
+            this.$confirm(this.$T('TIPS_PLUGIN_NOT_GUI_IMPLEMENT'), this.$T('TIPS_NOTICE'), {
+                confirmButtonText: this.$T('CONFIRM'),
+                cancelButtonText: this.$T('CANCEL'),
+                type: 'warning'
+            }).then(() => {
+                item.ing = true
+                ipcRenderer.send('installPlugin', item.fullName)
+            }).catch(() => {
+                console.log('Install canceled')
+            })
+        } else {
+            item.ing = true
+            ipcRenderer.send('installPlugin', item.fullName)
         }
-        this.getPicBeds()
-      })
-      this.handleReload()
-      this.getPluginList()
-    })
-    ipcRenderer.on('uninstallSuccess', (evt: IpcRendererEvent, plugin: string) => {
-      this.loading = false
-      this.pluginList = this.pluginList.filter(item => {
-        if (item.fullName === plugin) { // restore Uploader & Transformer after uninstalling
-          if (item.config.transformer.name) {
-            this.handleRestoreState('transformer', item.config.transformer.name)
-          }
-          if (item.config.uploader.name) {
-            this.handleRestoreState('uploader', item.config.uploader.name)
-          }
-          this.getPicBeds()
-        }
-        return item.fullName !== plugin
-      })
-      this.pluginNameList = this.pluginNameList.filter(item => item !== plugin)
-    })
-    ipcRenderer.on(PICGO_CONFIG_PLUGIN, (evt: IpcRendererEvent, currentType: string, configName: string, config: any) => {
-      this.currentType = currentType
-      this.configName = configName
-      this.dialogVisible = true
-      this.config = config
-    })
-    ipcRenderer.on(PICGO_HANDLE_PLUGIN_ING, (evt: IpcRendererEvent, fullName: string) => {
-      this.pluginList.forEach(item => {
-        if (item.fullName === fullName || (item.name === fullName)) {
-          item.ing = true
-        }
-      })
-      this.loading = true
-    })
-    ipcRenderer.on(PICGO_TOGGLE_PLUGIN, (evt: IpcRendererEvent, fullName: string, enabled: boolean) => {
-      const plugin = this.pluginList.find(item => item.fullName === fullName)
-      if (plugin) {
-        plugin.enabled = enabled
-        this.getPicBeds()
+    }
+
+    uninstallPlugin (val: string) {
+        this.pluginList.forEach(item => {
+            if (item.name === val) {
+                item.ing = true
+            }
+        })
+        this.loading = true
+        ipcRenderer.send('uninstallPlugin', val)
+    }
+
+    updatePlugin (val: string) {
+        this.pluginList.forEach(item => {
+            if (item.fullName === val) {
+                item.ing = true
+            }
+        })
+        this.loading = true
+        ipcRenderer.send('updatePlugin', val)
+    }
+
+    reloadApp () {
+        ipcRenderer.send(RELOAD_APP)
+    }
+
+    async handleReload () {
+        this.saveConfig({
+            needReload: true
+        })
         this.needReload = true
-      }
-    })
-    this.getPluginList()
-    this.getSearchResult = debounce(this.getSearchResult, 50)
-    this.needReload = await this.getConfig<boolean>('needReload') || false
-  }
-
-  async buildContextMenu (plugin: IPicGoPlugin) {
-    ipcRenderer.send(SHOW_PLUGIN_PAGE_MENU, plugin)
-  }
-
-  getPluginList () {
-    ipcRenderer.send('getPluginList')
-  }
-
-  getPicBeds () {
-    ipcRenderer.send('getPicBeds')
-  }
-
-  installPlugin (item: IPicGoPlugin) {
-    if (!item.gui) {
-      this.$confirm(this.$T('TIPS_PLUGIN_NOT_GUI_IMPLEMENT'), this.$T('TIPS_NOTICE'), {
-        confirmButtonText: this.$T('CONFIRM'),
-        cancelButtonText: this.$T('CANCEL'),
-        type: 'warning'
-      }).then(() => {
-        item.ing = true
-        ipcRenderer.send('installPlugin', item.fullName)
-      }).catch(() => {
-        console.log('Install canceled')
-      })
-    } else {
-      item.ing = true
-      ipcRenderer.send('installPlugin', item.fullName)
-    }
-  }
-
-  uninstallPlugin (val: string) {
-    this.pluginList.forEach(item => {
-      if (item.name === val) {
-        item.ing = true
-      }
-    })
-    this.loading = true
-    ipcRenderer.send('uninstallPlugin', val)
-  }
-
-  updatePlugin (val: string) {
-    this.pluginList.forEach(item => {
-      if (item.fullName === val) {
-        item.ing = true
-      }
-    })
-    this.loading = true
-    ipcRenderer.send('updatePlugin', val)
-  }
-
-  reloadApp () {
-    ipcRenderer.send(RELOAD_APP)
-  }
-
-  async handleReload () {
-    this.saveConfig({
-      needReload: true
-    })
-    this.needReload = true
-    const successNotification = new Notification(this.$T('PLUGIN_UPDATE_SUCCEED'), {
-      body: this.$T('TIPS_NEED_RELOAD')
-    })
-    successNotification.onclick = () => {
-      this.reloadApp()
-    }
-  }
-
-  cleanSearch () {
-    this.searchText = ''
-  }
-
-  async handleConfirmConfig () {
-    // @ts-ignore
-    const result = await this.$refs.configForm.validate()
-    if (result !== false) {
-      switch (this.currentType) {
-        case 'plugin':
-          this.saveConfig({
-            [`${this.configName}`]: result
-          })
-          break
-        case 'uploader':
-          this.saveConfig({
-            [`picBed.${this.configName}`]: result
-          })
-          break
-        case 'transformer':
-          this.saveConfig({
-            [`transformer.${this.configName}`]: result
-          })
-          break
-      }
-      const successNotification = new Notification(this.$T('SETTINGS_RESULT'), {
-        body: this.$T('TIPS_SET_SUCCEED')
-      })
-      successNotification.onclick = () => {
-        return true
-      }
-      this.dialogVisible = false
-      this.getPluginList()
-    }
-  }
-
-  getSearchResult (val: string) {
-    // this.$http.get(`https://api.npms.io/v2/search?q=${val}`)
-    this.$http.get(`https://registry.npmjs.com/-/v1/search?text=${val}`)
-      .then((res: INPMSearchResult) => {
-        this.pluginList = res.data.objects
-          .filter((item:INPMSearchResultObject) => {
-            return item.package.name.includes('picgo-plugin-')
-          })
-          .map((item: INPMSearchResultObject) => {
-            return this.handleSearchResult(item)
-          })
-        this.loading = false
-      })
-      .catch(err => {
-        console.log(err)
-        this.loading = false
-      })
-  }
-
-  handleSearchResult (item: INPMSearchResultObject) {
-    const name = handleStreamlinePluginName(item.package.name)
-    let gui = false
-    if (item.package.keywords && item.package.keywords.length > 0) {
-      if (item.package.keywords.includes('picgo-gui-plugin')) {
-        gui = true
-      }
-    }
-    return {
-      name: name,
-      fullName: item.package.name,
-      author: item.package.author.name,
-      description: item.package.description,
-      logo: `https://cdn.jsdelivr.net/npm/${item.package.name}/logo.png`,
-      config: {},
-      homepage: item.package.links ? item.package.links.homepage : '',
-      hasInstall: this.pluginNameList.some(plugin => plugin === item.package.name),
-      version: item.package.version,
-      gui,
-      ing: false // installing or uninstalling
-    }
-  }
-
-  // restore Uploader & Transformer
-  async handleRestoreState (item: string, name: string) {
-    if (item === 'uploader') {
-      const current = await this.getConfig('picBed.current')
-      if (current === name) {
-        this.saveConfig({
-          'picBed.current': 'smms',
-          'picBed.uploader': 'smms'
+        const successNotification = new Notification(this.$T('PLUGIN_UPDATE_SUCCEED'), {
+            body: this.$T('TIPS_NEED_RELOAD')
         })
-      }
+        successNotification.onclick = () => {
+            this.reloadApp()
+        }
     }
-    if (item === 'transformer') {
-      const current = await this.getConfig('picBed.transformer')
-      if (current === name) {
-        this.saveConfig({
-          'picBed.transformer': 'path'
-        })
-      }
+
+    cleanSearch () {
+        this.searchText = ''
     }
-  }
 
-  openHomepage (url: string) {
-    if (url) {
-      ipcRenderer.send(OPEN_URL, url)
+    async handleConfirmConfig () {
+        // @ts-ignore
+        const result = await this.$refs.configForm.validate()
+        if (result !== false) {
+            switch (this.currentType) {
+                case 'plugin':
+                    this.saveConfig({
+                        [`${this.configName}`]: result
+                    })
+                    break
+                case 'uploader':
+                    this.saveConfig({
+                        [`picBed.${this.configName}`]: result
+                    })
+                    break
+                case 'transformer':
+                    this.saveConfig({
+                        [`transformer.${this.configName}`]: result
+                    })
+                    break
+            }
+            const successNotification = new Notification(this.$T('SETTINGS_RESULT'), {
+                body: this.$T('TIPS_SET_SUCCEED')
+            })
+            successNotification.onclick = () => {
+                return true
+            }
+            this.dialogVisible = false
+            this.getPluginList()
+        }
     }
-  }
 
-  goAwesomeList () {
-    ipcRenderer.send(OPEN_URL, 'https://github.com/PicGo/Awesome-PicGo')
-  }
+    getSearchResult (val: string) {
+        // this.$http.get(`https://api.npms.io/v2/search?q=${val}`)
+        this.$http.get(`https://registry.npmjs.com/-/v1/search?text=${val}`)
+            .then((res: INPMSearchResult) => {
+                this.pluginList = res.data.objects
+                    .filter((item:INPMSearchResultObject) => {
+                        return item.package.name.includes('picgo-plugin-')
+                    })
+                    .map((item: INPMSearchResultObject) => {
+                        return this.handleSearchResult(item)
+                    })
+                this.loading = false
+            })
+            .catch(err => {
+                console.log(err)
+                this.loading = false
+            })
+    }
 
-  saveConfig (data: IObj) {
-    ipcRenderer.send('picgoSaveData', data)
-  }
+    handleSearchResult (item: INPMSearchResultObject) {
+        const name = handleStreamlinePluginName(item.package.name)
+        let gui = false
+        if (item.package.keywords && item.package.keywords.length > 0) {
+            if (item.package.keywords.includes('picgo-gui-plugin')) {
+                gui = true
+            }
+        }
+        return {
+            name: name,
+            fullName: item.package.name,
+            author: item.package.author.name,
+            description: item.package.description,
+            logo: `https://cdn.jsdelivr.net/npm/${item.package.name}/logo.png`,
+            config: {},
+            homepage: item.package.links ? item.package.links.homepage : '',
+            hasInstall: this.pluginNameList.some(plugin => plugin === item.package.name),
+            version: item.package.version,
+            gui,
+            ing: false // installing or uninstalling
+        }
+    }
 
-  handleImportLocalPlugin () {
-    ipcRenderer.send('importLocalPlugin')
-    this.loading = true
-  }
+    // restore Uploader & Transformer
+    async handleRestoreState (item: string, name: string) {
+        if (item === 'uploader') {
+            const current = await this.getConfig('picBed.current')
+            if (current === name) {
+                this.saveConfig({
+                    'picBed.current': 'smms',
+                    'picBed.uploader': 'smms'
+                })
+            }
+        }
+        if (item === 'transformer') {
+            const current = await this.getConfig('picBed.transformer')
+            if (current === name) {
+                this.saveConfig({
+                    'picBed.transformer': 'path'
+                })
+            }
+        }
+    }
 
-  beforeDestroy () {
-    ipcRenderer.removeAllListeners('pluginList')
-    ipcRenderer.removeAllListeners('installPlugin')
-    ipcRenderer.removeAllListeners('uninstallSuccess')
-    ipcRenderer.removeAllListeners('updateSuccess')
-    ipcRenderer.removeAllListeners('hideLoading')
-  }
+    openHomepage (url: string) {
+        if (url) {
+            ipcRenderer.send(OPEN_URL, url)
+        }
+    }
+
+    goAwesomeList () {
+        ipcRenderer.send(OPEN_URL, 'https://github.com/PicGo/Awesome-PicGo')
+    }
+
+    saveConfig (data: IObj) {
+        ipcRenderer.send('picgoSaveData', data)
+    }
+
+    handleImportLocalPlugin () {
+        ipcRenderer.send('importLocalPlugin')
+        this.loading = true
+    }
+
+    beforeDestroy () {
+        ipcRenderer.removeAllListeners('pluginList')
+        ipcRenderer.removeAllListeners('installPlugin')
+        ipcRenderer.removeAllListeners('uninstallSuccess')
+        ipcRenderer.removeAllListeners('updateSuccess')
+        ipcRenderer.removeAllListeners('hideLoading')
+    }
 }
 </script>
 <style lang='stylus'>

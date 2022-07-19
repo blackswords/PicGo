@@ -35,39 +35,39 @@ import { Component, Vue } from 'vue-property-decorator'
 import mixin from '@/utils/ConfirmButtonMixin'
 import { trimValues } from '@/utils/common'
 @Component({
-  name: 'smms',
-  mixins: [mixin]
+    name: 'smms',
+    mixins: [mixin]
 })
 export default class extends Vue {
-  form: ISMMSConfig = {
-    token: ''
-  }
-
-  async created () {
-    const config = await this.getConfig<string | boolean>('picBed.smms.token')
-    if (typeof config !== 'boolean') {
-      this.form.token = config || ''
+    form: ISMMSConfig = {
+        token: ''
     }
-  }
 
-  confirm () {
-    // @ts-ignore
-    this.$refs.smms.validate((valid) => {
-      if (valid) {
-        this.saveConfig({
-          'picBed.smms': trimValues(this.form)
-        })
-        const successNotification = new window.Notification('设置结果', {
-          body: '设置成功'
-        })
-        successNotification.onclick = () => {
-          return true
+    async created () {
+        const config = await this.getConfig<string | boolean>('picBed.smms.token')
+        if (typeof config !== 'boolean') {
+            this.form.token = config || ''
         }
-      } else {
-        return false
-      }
-    })
-  }
+    }
+
+    confirm () {
+        // @ts-ignore
+        this.$refs.smms.validate((valid) => {
+            if (valid) {
+                this.saveConfig({
+                    'picBed.smms': trimValues(this.form)
+                })
+                const successNotification = new window.Notification('设置结果', {
+                    body: '设置成功'
+                })
+                successNotification.onclick = () => {
+                    return true
+                }
+            } else {
+                return false
+            }
+        })
+    }
 }
 </script>
 <style lang='stylus'>

@@ -70,44 +70,44 @@ import mixin from '@/utils/ConfirmButtonMixin'
 import { IUpyunConfig } from 'picgo/dist/types'
 import { trimValues } from '@/utils/common'
 @Component({
-  name: 'upyun',
-  mixins: [mixin]
+    name: 'upyun',
+    mixins: [mixin]
 })
 export default class extends Vue {
-  form: IUpyunConfig = {
-    bucket: '',
-    operator: '',
-    password: '',
-    options: '',
-    url: '',
-    path: ''
-  }
-
-  async created () {
-    const config = await this.getConfig<IUpyunConfig>('picBed.upyun')
-    if (config) {
-      this.form = Object.assign({}, config)
+    form: IUpyunConfig = {
+        bucket: '',
+        operator: '',
+        password: '',
+        options: '',
+        url: '',
+        path: ''
     }
-  }
 
-  confirm () {
-    // @ts-ignore
-    this.$refs.tcyun.validate((valid) => {
-      if (valid) {
-        this.saveConfig({
-          'picBed.upyun': trimValues(this.form)
-        })
-        const successNotification = new Notification('设置结果', {
-          body: '设置成功'
-        })
-        successNotification.onclick = () => {
-          return true
+    async created () {
+        const config = await this.getConfig<IUpyunConfig>('picBed.upyun')
+        if (config) {
+            this.form = Object.assign({}, config)
         }
-      } else {
-        return false
-      }
-    })
-  }
+    }
+
+    confirm () {
+        // @ts-ignore
+        this.$refs.tcyun.validate((valid) => {
+            if (valid) {
+                this.saveConfig({
+                    'picBed.upyun': trimValues(this.form)
+                })
+                const successNotification = new Notification('设置结果', {
+                    body: '设置成功'
+                })
+                successNotification.onclick = () => {
+                    return true
+                }
+            } else {
+                return false
+            }
+        })
+    }
 }
 </script>
 <style lang='stylus'>

@@ -26,37 +26,37 @@ import { RENAME_FILE_NAME } from '#/events/constants'
 import { Component, Vue } from 'vue-property-decorator'
 import mixin from '@/utils/mixin'
 import {
-  ipcRenderer,
-  IpcRendererEvent
+    ipcRenderer,
+    IpcRendererEvent
 } from 'electron'
 @Component({
-  name: 'rename-page',
-  mixins: [mixin]
+    name: 'rename-page',
+    mixins: [mixin]
 })
 export default class extends Vue {
-  fileName: string = ''
-  originName: string = ''
-  id: string | null = null
-  created () {
-    ipcRenderer.on(RENAME_FILE_NAME, (event: IpcRendererEvent, newName: string, originName: string, id: string) => {
-      this.fileName = newName
-      this.originName = originName
-      this.id = id
-    })
-  }
+    fileName: string = ''
+    originName: string = ''
+    id: string | null = null
+    created () {
+        ipcRenderer.on(RENAME_FILE_NAME, (event: IpcRendererEvent, newName: string, originName: string, id: string) => {
+            this.fileName = newName
+            this.originName = originName
+            this.id = id
+        })
+    }
 
-  confirmName () {
-    ipcRenderer.send(`${RENAME_FILE_NAME}${this.id}`, this.fileName)
-  }
+    confirmName () {
+        ipcRenderer.send(`${RENAME_FILE_NAME}${this.id}`, this.fileName)
+    }
 
-  cancel () {
-    // if cancel, use origin file name
-    ipcRenderer.send(`${RENAME_FILE_NAME}${this.id}`, this.originName)
-  }
+    cancel () {
+        // if cancel, use origin file name
+        ipcRenderer.send(`${RENAME_FILE_NAME}${this.id}`, this.originName)
+    }
 
-  beforeDestroy () {
-    ipcRenderer.removeAllListeners('rename')
-  }
+    beforeDestroy () {
+        ipcRenderer.removeAllListeners('rename')
+    }
 }
 </script>
 <style lang='stylus'>

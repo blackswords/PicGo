@@ -114,345 +114,345 @@ import { Component, Vue, Watch } from 'vue-property-decorator'
 import { IResult } from '@picgo/store/dist/types'
 import { PASTE_TEXT } from '#/events/constants'
 import {
-  ipcRenderer,
-  clipboard,
-  IpcRendererEvent
+    ipcRenderer,
+    clipboard,
+    IpcRendererEvent
 } from 'electron'
 @Component({
-  name: 'gallery',
-  components: {
-    gallerys
-  }
+    name: 'gallery',
+    components: {
+        gallerys
+    }
 })
 export default class extends Vue {
-  images: ImgInfo[] = []
-  idx: null | number = null
-  options = {
-    titleProperty: 'fileName',
-    urlProperty: 'imgUrl',
-    closeOnSlideClick: true
-  }
-
-  dialogVisible = false
-  imgInfo = {
-    id: '',
-    imgUrl: ''
-  }
-
-  choosedList: IObjT<boolean> = {}
-  choosedPicBed: string[] = []
-  lastChoosed: number = -1
-  isShiftKeyPress: boolean = false
-  searchText = ''
-  handleBarActive = false
-  pasteStyle = ''
-  pasteStyleMap = {
-    Markdown: 'markdown',
-    HTML: 'HTML',
-    URL: 'URL',
-    UBB: 'UBB',
-    Custom: 'Custom'
-  }
-
-  picBed: IPicBedType[] = []
-  @Watch('$route')
-  handleRouteUpdate (to: any, from: any) {
-    console.log(to, from)
-    if (from.name === 'gallery') {
-      this.clearChoosedList()
+    images: ImgInfo[] = []
+    idx: null | number = null
+    options = {
+        titleProperty: 'fileName',
+        urlProperty: 'imgUrl',
+        closeOnSlideClick: true
     }
-    if (to.name === 'gallery') {
-      this.updateGallery()
+
+    dialogVisible = false
+    imgInfo = {
+        id: '',
+        imgUrl: ''
     }
-  }
 
-  async created () {
-    ipcRenderer.on('updateGallery', () => {
-      this.$nextTick(async () => {
-        this.updateGallery()
-      })
-    })
-    ipcRenderer.send('getPicBeds')
-    ipcRenderer.on('getPicBeds', this.getPicBeds)
-    this.updateGallery()
-  }
-
-  mounted () {
-    document.addEventListener('keydown', this.handleDetectShiftKey)
-    document.addEventListener('keyup', this.handleDetectShiftKey)
-  }
-
-  handleDetectShiftKey (event: KeyboardEvent) {
-    if (event.key === 'Shift') {
-      if (event.type === 'keydown') {
-        this.isShiftKeyPress = true
-      } else if (event.type === 'keyup') {
-        this.isShiftKeyPress = false
-      }
+    choosedList: IObjT<boolean> = {}
+    choosedPicBed: string[] = []
+    lastChoosed: number = -1
+    isShiftKeyPress: boolean = false
+    searchText = ''
+    handleBarActive = false
+    pasteStyle = ''
+    pasteStyleMap = {
+        Markdown: 'markdown',
+        HTML: 'HTML',
+        URL: 'URL',
+        UBB: 'UBB',
+        Custom: 'Custom'
     }
-  }
 
-  get filterList () {
-    return this.getGallery()
-  }
-
-  get isAllSelected () {
-    const values = Object.values(this.choosedList)
-    if (values.length === 0) {
-      return false
-    } else {
-      return this.filterList.every(item => {
-        return this.choosedList[item.id!]
-      })
+    picBed: IPicBedType[] = []
+    @Watch('$route')
+    handleRouteUpdate (to: any, from: any) {
+        console.log(to, from)
+        if (from.name === 'gallery') {
+            this.clearChoosedList()
+        }
+        if (to.name === 'gallery') {
+            this.updateGallery()
+        }
     }
-  }
 
-  getPicBeds (event: IpcRendererEvent, picBeds: IPicBedType[]) {
-    this.picBed = picBeds
-  }
-
-  getGallery (): ImgInfo[] {
-    if (this.searchText || this.choosedPicBed.length > 0) {
-      return this.images
-        .filter(item => {
-          let isInChoosedPicBed = true
-          let isIncludesSearchText = true
-          if (this.choosedPicBed.length > 0) {
-            isInChoosedPicBed = this.choosedPicBed.some(type => type === item.type)
-          }
-          if (this.searchText) {
-            isIncludesSearchText = item.fileName?.includes(this.searchText) || false
-          }
-          return isIncludesSearchText && isInChoosedPicBed
+    async created () {
+        ipcRenderer.on('updateGallery', () => {
+            this.$nextTick(async () => {
+                this.updateGallery()
+            })
         })
-    } else {
-      return this.images
-    }
-  }
-
-  async updateGallery () {
-    this.images = (await this.$$db.get({ orderBy: 'desc' })).data
-  }
-
-  @Watch('filterList')
-  handleFilterListChange () {
-    this.clearChoosedList()
-  }
-
-  handleChooseImage (val: boolean, index: number) {
-    if (val === true) {
-      this.handleBarActive = true
-      if (this.lastChoosed !== -1 && this.isShiftKeyPress) {
-        const min = Math.min(this.lastChoosed, index)
-        const max = Math.max(this.lastChoosed, index)
-        for (let i = min + 1; i < max; i++) {
-          const id = this.filterList[i].id!
-          this.$set(this.choosedList, id, true)
-        }
-      }
-      this.lastChoosed = index
-    }
-  }
-
-  clearChoosedList () {
-    this.isShiftKeyPress = false
-    Object.keys(this.choosedList).forEach(key => {
-      this.choosedList[key] = false
-    })
-    this.lastChoosed = -1
-  }
-
-  zoomImage (index: number) {
-    this.idx = index
-    this.changeZIndexForGallery(true)
-  }
-
-  changeZIndexForGallery (isOpen: boolean) {
-    if (isOpen) {
-      // @ts-ignore
-      document.querySelector('.main-content.el-row').style.zIndex = 101
-    } else {
-      // @ts-ignore
-      document.querySelector('.main-content.el-row').style.zIndex = 10
-    }
-  }
-
-  handleClose () {
-    this.idx = null
-    this.changeZIndexForGallery(false)
-  }
-
-  async copy (item: ImgInfo) {
-    const copyLink = await ipcRenderer.invoke(PASTE_TEXT, item)
-    const obj = {
-      title: this.$T('COPY_LINK_SUCCEED'),
-      body: copyLink,
-      icon: item.url || item.imgUrl
-    }
-    const myNotification = new Notification(obj.title, obj)
-    myNotification.onclick = () => {
-      return true
-    }
-  }
-
-  remove (id?: string) {
-    if (id) {
-      this.$confirm(this.$T('TIPS_REMOVE_LINK'), this.$T('TIPS_NOTICE'), {
-        confirmButtonText: this.$T('CONFIRM'),
-        cancelButtonText: this.$T('CANCEL'),
-        type: 'warning'
-      }).then(async () => {
-        const file = await this.$$db.getById(id)
-        await this.$$db.removeById(id)
-        ipcRenderer.send('removeFiles', [file])
-        const obj = {
-          title: this.$T('OPERATION_SUCCEED'),
-          body: ''
-        }
-        const myNotification = new Notification(obj.title, obj)
-        myNotification.onclick = () => {
-          return true
-        }
+        ipcRenderer.send('getPicBeds')
+        ipcRenderer.on('getPicBeds', this.getPicBeds)
         this.updateGallery()
-      }).catch((e) => {
-        console.log(e)
-        return true
-      })
     }
-  }
 
-  openDialog (item: ImgInfo) {
-    this.imgInfo.id = item.id!
-    this.imgInfo.imgUrl = item.imgUrl as string
-    this.dialogVisible = true
-  }
-
-  async confirmModify () {
-    await this.$$db.updateById(this.imgInfo.id, {
-      imgUrl: this.imgInfo.imgUrl
-    })
-    const obj = {
-      title: this.$T('CHANGE_IMAGE_URL_SUCCEED'),
-      body: this.imgInfo.imgUrl,
-      icon: this.imgInfo.imgUrl
+    mounted () {
+        document.addEventListener('keydown', this.handleDetectShiftKey)
+        document.addEventListener('keyup', this.handleDetectShiftKey)
     }
-    const myNotification = new Notification(obj.title, obj)
-    myNotification.onclick = () => {
-      return true
-    }
-    this.dialogVisible = false
-    this.updateGallery()
-  }
 
-  choosePicBed (type: string) {
-    const idx = this.choosedPicBed.indexOf(type)
-    if (idx !== -1) {
-      this.choosedPicBed.splice(idx, 1)
-    } else {
-      this.choosedPicBed.push(type)
-    }
-  }
-
-  cleanSearch () {
-    this.searchText = ''
-  }
-
-  isMultiple (obj: IObj) {
-    return Object.values(obj).some(item => item)
-  }
-
-  toggleSelectAll () {
-    const result = !this.isAllSelected
-    this.filterList.forEach(item => {
-      this.$set(this.choosedList, item.id!, result)
-    })
-  }
-
-  multiRemove () {
-    // choosedList -> { [id]: true or false }; true means choosed. false means not choosed.
-    const multiRemoveNumber = Object.values(this.choosedList).filter(item => item).length
-    if (multiRemoveNumber) {
-      this.$confirm(this.$T('TIPS_WILL_REMOVE_CHOOSED_IMAGES', {
-        m: multiRemoveNumber
-      }), this.$T('TIPS_NOTICE'), {
-        confirmButtonText: this.$T('CONFIRM'),
-        cancelButtonText: this.$T('CANCEL'),
-        type: 'warning'
-      }).then(async () => {
-        const files: IResult<ImgInfo>[] = []
-        const imageIDList = Object.keys(this.choosedList)
-        for (let i = 0; i < imageIDList.length; i++) {
-          const key = imageIDList[i]
-          if (this.choosedList[key]) {
-            const file = await this.$$db.getById<ImgInfo>(key)
-            if (file) {
-              files.push(file)
-              await this.$$db.removeById(key)
+    handleDetectShiftKey (event: KeyboardEvent) {
+        if (event.key === 'Shift') {
+            if (event.type === 'keydown') {
+                this.isShiftKeyPress = true
+            } else if (event.type === 'keyup') {
+                this.isShiftKeyPress = false
             }
-          }
         }
+    }
+
+    get filterList () {
+        return this.getGallery()
+    }
+
+    get isAllSelected () {
+        const values = Object.values(this.choosedList)
+        if (values.length === 0) {
+            return false
+        } else {
+            return this.filterList.every(item => {
+                return this.choosedList[item.id!]
+            })
+        }
+    }
+
+    getPicBeds (event: IpcRendererEvent, picBeds: IPicBedType[]) {
+        this.picBed = picBeds
+    }
+
+    getGallery (): ImgInfo[] {
+        if (this.searchText || this.choosedPicBed.length > 0) {
+            return this.images
+                .filter(item => {
+                    let isInChoosedPicBed = true
+                    let isIncludesSearchText = true
+                    if (this.choosedPicBed.length > 0) {
+                        isInChoosedPicBed = this.choosedPicBed.some(type => type === item.type)
+                    }
+                    if (this.searchText) {
+                        isIncludesSearchText = item.fileName?.includes(this.searchText) || false
+                    }
+                    return isIncludesSearchText && isInChoosedPicBed
+                })
+        } else {
+            return this.images
+        }
+    }
+
+    async updateGallery () {
+        this.images = (await this.$$db.get({ orderBy: 'desc' })).data
+    }
+
+    @Watch('filterList')
+    handleFilterListChange () {
         this.clearChoosedList()
-        this.choosedList = {} // 只有删除才能将这个置空
-        const obj = {
-          title: this.$T('OPERATION_SUCCEED'),
-          body: ''
+    }
+
+    handleChooseImage (val: boolean, index: number) {
+        if (val === true) {
+            this.handleBarActive = true
+            if (this.lastChoosed !== -1 && this.isShiftKeyPress) {
+                const min = Math.min(this.lastChoosed, index)
+                const max = Math.max(this.lastChoosed, index)
+                for (let i = min + 1; i < max; i++) {
+                    const id = this.filterList[i].id!
+                    this.$set(this.choosedList, id, true)
+                }
+            }
+            this.lastChoosed = index
         }
-        ipcRenderer.send('removeFiles', files)
+    }
+
+    clearChoosedList () {
+        this.isShiftKeyPress = false
+        Object.keys(this.choosedList).forEach(key => {
+            this.choosedList[key] = false
+        })
+        this.lastChoosed = -1
+    }
+
+    zoomImage (index: number) {
+        this.idx = index
+        this.changeZIndexForGallery(true)
+    }
+
+    changeZIndexForGallery (isOpen: boolean) {
+        if (isOpen) {
+            // @ts-ignore
+            document.querySelector('.main-content.el-row').style.zIndex = 101
+        } else {
+            // @ts-ignore
+            document.querySelector('.main-content.el-row').style.zIndex = 10
+        }
+    }
+
+    handleClose () {
+        this.idx = null
+        this.changeZIndexForGallery(false)
+    }
+
+    async copy (item: ImgInfo) {
+        const copyLink = await ipcRenderer.invoke(PASTE_TEXT, item)
+        const obj = {
+            title: this.$T('COPY_LINK_SUCCEED'),
+            body: copyLink,
+            icon: item.url || item.imgUrl
+        }
         const myNotification = new Notification(obj.title, obj)
         myNotification.onclick = () => {
-          return true
+            return true
         }
+    }
+
+    remove (id?: string) {
+        if (id) {
+            this.$confirm(this.$T('TIPS_REMOVE_LINK'), this.$T('TIPS_NOTICE'), {
+                confirmButtonText: this.$T('CONFIRM'),
+                cancelButtonText: this.$T('CANCEL'),
+                type: 'warning'
+            }).then(async () => {
+                const file = await this.$$db.getById(id)
+                await this.$$db.removeById(id)
+                ipcRenderer.send('removeFiles', [file])
+                const obj = {
+                    title: this.$T('OPERATION_SUCCEED'),
+                    body: ''
+                }
+                const myNotification = new Notification(obj.title, obj)
+                myNotification.onclick = () => {
+                    return true
+                }
+                this.updateGallery()
+            }).catch((e) => {
+                console.log(e)
+                return true
+            })
+        }
+    }
+
+    openDialog (item: ImgInfo) {
+        this.imgInfo.id = item.id!
+        this.imgInfo.imgUrl = item.imgUrl as string
+        this.dialogVisible = true
+    }
+
+    async confirmModify () {
+        await this.$$db.updateById(this.imgInfo.id, {
+            imgUrl: this.imgInfo.imgUrl
+        })
+        const obj = {
+            title: this.$T('CHANGE_IMAGE_URL_SUCCEED'),
+            body: this.imgInfo.imgUrl,
+            icon: this.imgInfo.imgUrl
+        }
+        const myNotification = new Notification(obj.title, obj)
+        myNotification.onclick = () => {
+            return true
+        }
+        this.dialogVisible = false
         this.updateGallery()
-      }).catch(() => {
-        return true
-      })
     }
-  }
 
-  async multiCopy () {
-    if (Object.values(this.choosedList).some(item => item)) {
-      const copyString: string[] = []
-      // choosedList -> { [id]: true or false }; true means choosed. false means not choosed.
-      const imageIDList = Object.keys(this.choosedList)
-      for (let i = 0; i < imageIDList.length; i++) {
-        const key = imageIDList[i]
-        if (this.choosedList[key]) {
-          const item = await this.$$db.getById<ImgInfo>(key)
-          if (item) {
-            const txt = await ipcRenderer.invoke(PASTE_TEXT, item)
-            copyString.push(txt)
-            this.choosedList[key] = false
-          }
+    choosePicBed (type: string) {
+        const idx = this.choosedPicBed.indexOf(type)
+        if (idx !== -1) {
+            this.choosedPicBed.splice(idx, 1)
+        } else {
+            this.choosedPicBed.push(type)
         }
-      }
-      const obj = {
-        title: this.$T('BATCH_COPY_LINK_SUCCEED'),
-        body: copyString.join('\n')
-      }
-      const myNotification = new Notification(obj.title, obj)
-      clipboard.writeText(copyString.join('\n'))
-      myNotification.onclick = () => {
-        return true
-      }
     }
-  }
 
-  toggleHandleBar () {
-    this.handleBarActive = !this.handleBarActive
-  }
+    cleanSearch () {
+        this.searchText = ''
+    }
 
-  // getPasteStyle () {
-  //   this.pasteStyle = this.$db.get('settings.pasteStyle') || 'markdown'
-  // }
-  async handlePasteStyleChange (val: string) {
-    this.saveConfig('settings.pasteStyle', val)
-    this.pasteStyle = val
-  }
+    isMultiple (obj: IObj) {
+        return Object.values(obj).some(item => item)
+    }
 
-  beforeDestroy () {
-    ipcRenderer.removeAllListeners('updateGallery')
-    ipcRenderer.removeListener('getPicBeds', this.getPicBeds)
-  }
+    toggleSelectAll () {
+        const result = !this.isAllSelected
+        this.filterList.forEach(item => {
+            this.$set(this.choosedList, item.id!, result)
+        })
+    }
+
+    multiRemove () {
+        // choosedList -> { [id]: true or false }; true means choosed. false means not choosed.
+        const multiRemoveNumber = Object.values(this.choosedList).filter(item => item).length
+        if (multiRemoveNumber) {
+            this.$confirm(this.$T('TIPS_WILL_REMOVE_CHOOSED_IMAGES', {
+                m: multiRemoveNumber
+            }), this.$T('TIPS_NOTICE'), {
+                confirmButtonText: this.$T('CONFIRM'),
+                cancelButtonText: this.$T('CANCEL'),
+                type: 'warning'
+            }).then(async () => {
+                const files: IResult<ImgInfo>[] = []
+                const imageIDList = Object.keys(this.choosedList)
+                for (let i = 0; i < imageIDList.length; i++) {
+                    const key = imageIDList[i]
+                    if (this.choosedList[key]) {
+                        const file = await this.$$db.getById<ImgInfo>(key)
+                        if (file) {
+                            files.push(file)
+                            await this.$$db.removeById(key)
+                        }
+                    }
+                }
+                this.clearChoosedList()
+                this.choosedList = {} // 只有删除才能将这个置空
+                const obj = {
+                    title: this.$T('OPERATION_SUCCEED'),
+                    body: ''
+                }
+                ipcRenderer.send('removeFiles', files)
+                const myNotification = new Notification(obj.title, obj)
+                myNotification.onclick = () => {
+                    return true
+                }
+                this.updateGallery()
+            }).catch(() => {
+                return true
+            })
+        }
+    }
+
+    async multiCopy () {
+        if (Object.values(this.choosedList).some(item => item)) {
+            const copyString: string[] = []
+            // choosedList -> { [id]: true or false }; true means choosed. false means not choosed.
+            const imageIDList = Object.keys(this.choosedList)
+            for (let i = 0; i < imageIDList.length; i++) {
+                const key = imageIDList[i]
+                if (this.choosedList[key]) {
+                    const item = await this.$$db.getById<ImgInfo>(key)
+                    if (item) {
+                        const txt = await ipcRenderer.invoke(PASTE_TEXT, item)
+                        copyString.push(txt)
+                        this.choosedList[key] = false
+                    }
+                }
+            }
+            const obj = {
+                title: this.$T('BATCH_COPY_LINK_SUCCEED'),
+                body: copyString.join('\n')
+            }
+            const myNotification = new Notification(obj.title, obj)
+            clipboard.writeText(copyString.join('\n'))
+            myNotification.onclick = () => {
+                return true
+            }
+        }
+    }
+
+    toggleHandleBar () {
+        this.handleBarActive = !this.handleBarActive
+    }
+
+    // getPasteStyle () {
+    //   this.pasteStyle = this.$db.get('settings.pasteStyle') || 'markdown'
+    // }
+    async handlePasteStyleChange (val: string) {
+        this.saveConfig('settings.pasteStyle', val)
+        this.pasteStyle = val
+    }
+
+    beforeDestroy () {
+        ipcRenderer.removeAllListeners('updateGallery')
+        ipcRenderer.removeListener('getPicBeds', this.getPicBeds)
+    }
 }
 </script>
 <style lang='stylus'>

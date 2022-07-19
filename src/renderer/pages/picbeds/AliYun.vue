@@ -74,45 +74,45 @@ import { Component, Vue } from 'vue-property-decorator'
 import mixin from '@/utils/ConfirmButtonMixin'
 import { trimValues } from '@/utils/common'
 @Component({
-  name: 'aliyun',
-  mixins: [mixin]
+    name: 'aliyun',
+    mixins: [mixin]
 })
 export default class extends Vue {
-  form: IAliYunConfig = {
-    accessKeyId: '',
-    accessKeySecret: '',
-    bucket: '',
-    area: '',
-    path: '',
-    customUrl: '',
-    options: ''
-  }
-
-  async created () {
-    const config = await this.getConfig<IAliYunConfig>('picBed.aliyun')
-    if (config) {
-      this.form = Object.assign({}, config)
+    form: IAliYunConfig = {
+        accessKeyId: '',
+        accessKeySecret: '',
+        bucket: '',
+        area: '',
+        path: '',
+        customUrl: '',
+        options: ''
     }
-  }
 
-  confirm () {
-    // @ts-ignore
-    this.$refs.aliyun.validate((valid) => {
-      if (valid) {
-        this.saveConfig({
-          'picBed.aliyun': trimValues(this.form)
-        })
-        const successNotification = new window.Notification('设置结果', {
-          body: '设置成功'
-        })
-        successNotification.onclick = () => {
-          return true
+    async created () {
+        const config = await this.getConfig<IAliYunConfig>('picBed.aliyun')
+        if (config) {
+            this.form = Object.assign({}, config)
         }
-      } else {
-        return false
-      }
-    })
-  }
+    }
+
+    confirm () {
+        // @ts-ignore
+        this.$refs.aliyun.validate((valid) => {
+            if (valid) {
+                this.saveConfig({
+                    'picBed.aliyun': trimValues(this.form)
+                })
+                const successNotification = new window.Notification('设置结果', {
+                    body: '设置成功'
+                })
+                successNotification.onclick = () => {
+                    return true
+                }
+            } else {
+                return false
+            }
+        })
+    }
 }
 </script>
 <style lang='stylus'>
